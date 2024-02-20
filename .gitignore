@@ -2,3 +2,4 @@
 .zed
 .vscode
 .sconsign.dblite
+compile_commands.json
