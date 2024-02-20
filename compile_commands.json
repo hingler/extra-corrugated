@@ -1,0 +1,8 @@
+[
+    {
+        "command": "g++ -o test/TestProg.o -c -std=c++17 -Iinclude -Ilib/glm test/TestProg.cpp",
+        "directory": "/Users/jamieboy1337/Desktop/dev/extra-corrugated",
+        "file": "test/TestProg.cpp",
+        "output": "test/TestProg.o"
+    }
+]
