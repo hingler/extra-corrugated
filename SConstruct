@@ -1,7 +1,7 @@
 import os
 
 try:
-  env = Import('env')
+  Import('env')
 except:
   env = Environment()
   env.Append(CXXFLAGS=["-std=c++17"])
@@ -24,5 +24,4 @@ tests = [
 ]
 
 test_sources = [test_dir + test + ".cpp" for test in tests]
-for test in test_sources:
-  Default(env.Program("g", test))
+Default(env.Program("gprogram", test_sources))

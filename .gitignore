@@ -3,3 +3,6 @@
 .vscode
 .sconsign.dblite
 compile_commands.json
+*.o
+g
+gprogram

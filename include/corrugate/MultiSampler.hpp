@@ -23,6 +23,10 @@ namespace cg {
     // this is what we want - enforce impl of spec
     static_assert(std::is_base_of_v<FeatureBox, BoxType>);
 
+    void FetchPoint(const glm::dvec2& point, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
+      FetchRange(point, glm::dvec2(0), output);
+    }
+
     // fetch all boxes within a certain range
     void FetchRange(const glm::dvec2& origin, const glm::dvec2& size, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
       glm::dvec2 end = origin + size;
