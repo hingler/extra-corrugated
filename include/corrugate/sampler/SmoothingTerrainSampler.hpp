@@ -7,21 +7,22 @@
 #include <mutex>
 
 namespace cg {
-  template <typename BaseType>
   class SmoothingTerrainSampler {
     // lazy init origin here still? thinking so
    public:
     // box param doesn't work
     // eventually: option to provide a max slope
     SmoothingTerrainSampler(
-      const std::shared_ptr<BaseType>& underlying,
       const FeatureBox& box
-    ) : base_sample_(underlying), box_(box) {}
+    ) : box_(box) {}
+
+    template <typename BaseType>
+    void PrepareCache(const std::shared_ptr<BaseType>& sampler) {
+      CalculateOrigin(sampler);
+    }
+
 
     double Smooth(double input) const {
-      if (!cached_) {
-        CalculateOrigin();
-      }
 
       double delta = height_origin - input;
 
@@ -44,8 +45,6 @@ namespace cg {
     mutable double secret_smoothing_factor = 0.0;
     mutable bool cached_ = false;
     mutable std::mutex cache_lock_;
-
-    std::shared_ptr<BaseType> base_sample_;
 
     // this doesn't work lole
     FeatureBox box_;
@@ -78,7 +77,8 @@ namespace cg {
     #define EPSILON 0.001
     #define INV_EPSILON (1.0 / EPSILON)
 
-    void CalculateOrigin() const {
+    template <typename US>
+    void CalculateOrigin(const std::shared_ptr<US>& base_sampler) const {
       std::lock_guard<std::mutex> lock(cache_lock_);
 
       if (cached_) {
@@ -91,9 +91,9 @@ namespace cg {
       double max_slope = 0.00001;
       for (unsigned int i = 0; i < _HAMMERSLEY_SAMPLES; i++) {
         glm::dvec2 point = GetHammersley(i, _HAMMERSLEY_SAMPLES, origin, size);
-        double height = base_sample_->Sample(point.x, point.y);
-        double grad_x = (base_sample_->Sample(point.x + EPSILON, point.y) - height) * INV_EPSILON;
-        double grad_y = (base_sample_->Sample(point.x, point.y + EPSILON) - height) * INV_EPSILON;
+        double height = base_sampler->Sample(point.x, point.y);
+        double grad_x = (base_sampler->Sample(point.x + EPSILON, point.y) - height) * INV_EPSILON;
+        double grad_y = (base_sampler->Sample(point.x, point.y + EPSILON) - height) * INV_EPSILON;
         max_slope = std::max(std::sqrt(grad_x * grad_x + grad_y * grad_y), max_slope);
 
         // two free samples :3

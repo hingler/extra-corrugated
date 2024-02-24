@@ -15,7 +15,10 @@
 
 #define _SAMPLER_CHUNK_SIZE 512
 
+// tba: create a class which abstracts registering smoothing/normal
+
 namespace cg {
+  // base sampler - identifies box positions
   template <typename BoxType>
   class MultiSampler {
    public:
@@ -69,22 +72,16 @@ namespace cg {
     std::shared_ptr<const BoxType> InsertBox(Args... args) {
       std::shared_ptr<InsertType> instance = std::make_shared<InsertType>(args...);
       std::shared_ptr<BoxType> box = std::dynamic_pointer_cast<BoxType>(instance);
-      glm::dvec2 origin = box->origin;
-      glm::dvec2 end = box->GetEnd();
 
-      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor(origin / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
-      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil(end / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
-
-      std::lock_guard<std::recursive_mutex> lock(sampler_lock);
-      for (int x = chunk_floor.x; x < chunk_ceil.x; x++) {
-        for (int y = chunk_floor.y; y < chunk_ceil.y; y++) {
-          glm::ivec2 chunk(x, y);
-          // need to test
-          InsertIntoChunk(chunk, box);
-        }
-      }
+      InsertBoxPointer(box);
 
       return std::const_pointer_cast<const BoxType>(box);
+    }
+
+    std::shared_ptr<const BoxType> InsertBox(std::unique_ptr<BoxType> box) {
+      std::shared_ptr<BoxType> box_ptr = std::move(box);
+      InsertBoxPointer(box_ptr);
+      return std::const_pointer_cast<const BoxType>(box_ptr);
     }
 
     std::shared_ptr<BoxType> RemoveBox(const std::shared_ptr<const BoxType>& box) {
@@ -113,6 +110,22 @@ namespace cg {
       return std::shared_ptr<BoxType>();
     }
    private:
+    void InsertBoxPointer(const std::shared_ptr<BoxType>& box) {
+      glm::dvec2 origin = box->origin;
+      glm::dvec2 end = box->GetEnd();
+
+      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor(origin / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil(end / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+
+      std::lock_guard<std::recursive_mutex> lock(sampler_lock);
+      for (int x = chunk_floor.x; x < chunk_ceil.x; x++) {
+        for (int y = chunk_floor.y; y < chunk_ceil.y; y++) {
+          glm::ivec2 chunk(x, y);
+          // need to test
+          InsertIntoChunk(chunk, box);
+        }
+      }
+    }
     // eff: i want "multisampler" to manage everything for me... but there's no way to spawn things atm
     void InsertIntoChunk(const glm::ivec2& chunk, const std::shared_ptr<BoxType>& box) {
       typename cache_type::iterator itr = chunk_lookup_cache.find(chunk);

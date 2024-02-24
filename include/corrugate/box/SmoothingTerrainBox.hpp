@@ -18,7 +18,6 @@ namespace cg {
   // - contents need to be boxes...
   // - ...and contents need to be smoothing.
   // - ...so we'd need
-  template <typename BaseType>
   class SmoothingTerrainBox : public BaseTerrainBox, public BaseSmoothingSamplerBox {
    public:
    template <typename HeightType, typename SplatType, typename FillType>
@@ -28,7 +27,6 @@ namespace cg {
       std::shared_ptr<HeightType> heightmap,
       std::shared_ptr<SplatType> splat,
       std::shared_ptr<FillType> fill,
-      std::shared_ptr<BaseType> underlying,
       float falloff_radius,
       float falloff_dist,
       float smoothing_factor
@@ -36,9 +34,14 @@ namespace cg {
     BaseTerrainBox(origin, size, heightmap, splat, fill, falloff_radius, falloff_dist),
     BaseSmoothingSamplerBox(origin, size, falloff_radius, falloff_dist),
     SamplerBox(origin, size, falloff_radius, falloff_dist),   // v base class ctor
-    smoother(underlying, *this),
+    smoother(*this),
     smoothing_factor(smoothing_factor) {
       smoother.smoothing_factor = smoothing_factor;
+    }
+
+    template <typename BaseType>
+    void PrepareCache(const std::shared_ptr<BaseType>& sampler) {
+      smoother.PrepareCache(sampler);
     }
 
     // this is handled before falloff!
@@ -94,7 +97,7 @@ namespace cg {
 
    private:
     const float smoothing_factor;
-    SmoothingTerrainSampler<BaseType> smoother;
+    SmoothingTerrainSampler smoother;
 
     // now:
     // sample+falloff
