@@ -89,6 +89,10 @@ namespace cg {
       FetchRange(box->GetOrigin(), box->GetSize(), output);
     }
 
+    size_t size() const {
+      return box_store.size();
+    }
+
     // the issue is, effectively, that this container doesn't maintain its own state (it cant!)
     template <typename InsertType, class... Args>
     std::shared_ptr<const BoxType> InsertBox(Args... args) {
