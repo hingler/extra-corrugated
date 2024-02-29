@@ -20,7 +20,25 @@ namespace cg {
   // - ...so we'd need
   class SmoothingTerrainBox : public BaseTerrainBox, public BaseSmoothingSamplerBox {
    public:
-   template <typename HeightType, typename SplatType, typename FillType>
+    template <typename HeightType, typename SplatType, typename FillType>
+    SmoothingTerrainBox(
+      const cg::FeatureBox& box,
+      std::shared_ptr<HeightType> heightmap,
+      std::shared_ptr<SplatType> splat,
+      std::shared_ptr<FillType> fill,
+      float smoothing_factor
+    ) : SmoothingTerrainBox(
+      box.GetOrigin(),
+      box.GetSize(),
+      heightmap,
+      splat,
+      fill,
+      box.falloff_radius,
+      box.falloff_size,
+      smoothing_factor
+    ) {};
+
+    template <typename HeightType, typename SplatType, typename FillType>
     SmoothingTerrainBox(
       const glm::dvec2& origin,
       const glm::dvec2& size,

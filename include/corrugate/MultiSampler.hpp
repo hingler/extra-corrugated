@@ -16,15 +16,37 @@
 #define _SAMPLER_CHUNK_SIZE 512
 
 // tba: create a class which abstracts registering smoothing/normal
+//
+// iteration behavior
+// - iterate over map -> iterate over set
+// - assume no modifications
+// - if at end of map, then we're at end
+// - if at end of set, then increment map and re-fetch itr
+// - else, increment set
 
 namespace cg {
   // base sampler - identifies box positions
   template <typename BoxType>
   class MultiSampler {
    public:
-    // assert that our boxes implement the box spec
-    // this is what we want - enforce impl of spec
+    // (making these public for impl)
+    // best way to handle these chunking operations? prob just vector
+    // - no way to get around memory stipulations, i don't think :/
+    typedef std::shared_ptr<BoxType> box_type;
+    typedef std::unordered_set<box_type> set_type;
+    typedef std::unordered_map<glm::ivec2, set_type> cache_type;
+
     static_assert(std::is_base_of_v<FeatureBox, BoxType>);
+
+    typedef typename set_type::const_iterator       iterator;
+
+    iterator begin() const {
+      return box_store.cbegin();
+    }
+
+    iterator end() const {
+      return box_store.cend();
+    }
 
     void FetchPoint(const glm::dvec2& point, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
       FetchRange(point, glm::dvec2(0), output);
@@ -85,11 +107,20 @@ namespace cg {
     }
 
     std::shared_ptr<BoxType> RemoveBox(const std::shared_ptr<const BoxType>& box) {
-      glm::dvec2 origin = box->GetOrigin();
-      glm::dvec2 end = origin + box->GetSize();
+      auto itr = box_store.find(std::const_pointer_cast<BoxType>(box));
+      if (itr == box_store.end()) {
+        return std::shared_ptr<BoxType>();
+      }
+
+      std::shared_ptr<BoxType> res = *itr;
+
+
+      glm::dvec2 origin = res->GetOrigin();
+      glm::dvec2 end = origin + res->GetSize();
 
       glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor(origin / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
       glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil(end / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+
 
       std::lock_guard<std::recursive_mutex> lock(sampler_lock);
       for (int x = chunk_floor.x; x < chunk_ceil.x; x++) {
@@ -97,18 +128,21 @@ namespace cg {
           glm::ivec2 chunk(x, y);
           typename cache_type::iterator itr = chunk_lookup_cache.find(chunk);
           if (itr != chunk_lookup_cache.end()) {
-            auto box_cast = std::const_pointer_cast<BoxType>(box);
-            typename set_type::iterator itr_local = itr->second.find(box_cast);
+
+            typename set_type::iterator itr_local = itr->second.find(res);
             if (itr_local != itr->second.end()) {
               itr->second.erase(itr_local);
-              return box_cast;
             }
           }
         }
       }
 
-      return std::shared_ptr<BoxType>();
+      box_store.erase(res);
+
+      return res;
     }
+
+
    private:
     void InsertBoxPointer(const std::shared_ptr<BoxType>& box) {
       glm::dvec2 origin = box->origin;
@@ -125,12 +159,15 @@ namespace cg {
           InsertIntoChunk(chunk, box);
         }
       }
+
+      box_store.insert(box);
     }
     // eff: i want "multisampler" to manage everything for me... but there's no way to spawn things atm
     void InsertIntoChunk(const glm::ivec2& chunk, const std::shared_ptr<BoxType>& box) {
       typename cache_type::iterator itr = chunk_lookup_cache.find(chunk);
       if (itr == chunk_lookup_cache.end()) {
         chunk_lookup_cache.insert(std::make_pair(chunk, std::unordered_set<std::shared_ptr<BoxType>> {}));
+
         itr = chunk_lookup_cache.find(chunk);
       }
 
@@ -139,15 +176,13 @@ namespace cg {
 
     mutable std::recursive_mutex sampler_lock;
 
-    // best way to handle these chunking operations? prob just vector
-    // - no way to get around memory stipulations, i don't think :/
-    typedef std::shared_ptr<BoxType> box_type;
-    typedef std::unordered_set<box_type> set_type;
-    typedef std::unordered_map<glm::ivec2, set_type> cache_type;
+   public:
 
     cache_type chunk_lookup_cache;
+    // no great way to handle, other than backing up with a dupe set
+    set_type   box_store;
 
-    // removal: sample bounds on the passed-in box!
+    // (dupe'd shared ptr - about 24 bytes per, so assume like a few dozen extra KB :-])
   };
 }
 
