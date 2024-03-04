@@ -6,6 +6,8 @@
 
 #include <algorithm>
 
+// correct type! nvm :-)
+
 namespace cg {
   template <typename SmoothingBoxType>
   class SmoothingMultiBoxSampler {
@@ -56,9 +58,8 @@ namespace cg {
     size_t WriteHeight(
       const glm::dvec2& origin,
       const glm::ivec2& sample_dims,
-      const chunker::util::Fraction& scale,
+      double scale,
       const DataSampler<float>& underlying,
-
       float* output,
       size_t n_bytes
     ) const {
@@ -97,7 +98,7 @@ namespace cg {
     size_t WriteSplat(
       const glm::dvec2& origin,
       const glm::ivec2& sample_dims,
-      const chunker::util::Fraction& scale,
+      double scale,
       size_t index,
       glm::vec4* output,
       size_t n_bytes
@@ -108,7 +109,7 @@ namespace cg {
     size_t WriteTreeFill(
       const glm::dvec2& origin,
       const glm::ivec2& sample_dims,
-      const chunker::util::Fraction& scale,
+      double scale,
       float* output,
       size_t n_bytes
     ) const {

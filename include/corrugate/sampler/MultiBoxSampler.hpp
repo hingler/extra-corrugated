@@ -68,7 +68,7 @@ namespace cg {
     size_t WriteHeight(
       const glm::dvec2& origin,
       const glm::ivec2& sample_dims,
-      const chunker::util::Fraction& scale,
+      double scale,
       float* output,
       size_t n_bytes
     ) const {

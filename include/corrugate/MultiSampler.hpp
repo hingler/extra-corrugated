@@ -28,13 +28,14 @@ namespace cg {
   // base sampler - identifies box positions
   template <typename BoxType>
   class MultiSampler {
-   public:
-    // (making these public for impl)
-    // best way to handle these chunking operations? prob just vector
-    // - no way to get around memory stipulations, i don't think :/
     typedef std::shared_ptr<BoxType> box_type;
     typedef std::unordered_set<box_type> set_type;
     typedef std::unordered_map<glm::ivec2, set_type> cache_type;
+   public:
+    typedef std::unordered_set<std::shared_ptr<const BoxType>> output_type;
+    // (making these public for impl)
+    // best way to handle these chunking operations? prob just vector
+    // - no way to get around memory stipulations, i don't think :/
 
     static_assert(std::is_base_of_v<FeatureBox, BoxType>);
 
