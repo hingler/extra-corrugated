@@ -32,6 +32,8 @@ namespace cg {
       float* output,
       size_t n_bytes
     ) const = 0;
+
+    virtual ~BaseSmoothingSamplerBox() {}
   };
 }
 

@@ -105,7 +105,7 @@ namespace cg {
       return std::const_pointer_cast<const BoxType>(box);
     }
 
-    std::shared_ptr<const BoxType> InsertBox(std::unique_ptr<BoxType> box) {
+    std::shared_ptr<const BoxType> InsertBox(std::unique_ptr<BoxType>&& box) {
       std::shared_ptr<BoxType> box_ptr = std::move(box);
       InsertBoxPointer(box_ptr);
       return std::const_pointer_cast<const BoxType>(box_ptr);
