@@ -35,7 +35,7 @@ namespace cg {
     glm::vec4 SampleSplat(double x, double y, size_t index)     const override {
       auto origin = GetOrigin();
       glm::dvec2 local_coord(x - origin.x, y - origin.y);
-
+  
       float falloff_weight = GetFalloffWeight_local(local_coord);
       return sampler.SampleSplat(local_coord.x, local_coord.y, index) * falloff_weight;
     };
@@ -82,7 +82,8 @@ namespace cg {
       size_t bytes_written = sampler.WriteSplat(origin_relative, sample_dims,scale, index, output, n_bytes);
       size_t elements_written = bytes_written / sizeof(glm::vec4);
 
-      ApplyFalloff<glm::vec4>(origin_relative, sample_dims, scale, output, elements_written, falloffs);
+      // test: don't apply falloff to splat data - think it's avg'ing
+      // ApplyFalloff<glm::vec4>(origin_relative, sample_dims, scale, output, elements_written, falloffs);
       return bytes_written;
     };
 

@@ -35,14 +35,19 @@ namespace cg {
       float falloffs[samplers.size()];
       float falloff_sum = 0.0f;
       // not a vector (oops!)
+      // how do we *actually* want to do this?
+      // - falloff would be clipped by influence (so as to prevent weird discontinuities when height contribution should be 0)
+      // - iirc: the intent was to ensure that smoothing contributions worked
       for (size_t i = 0; i < samplers.size(); i++) {
         falloffs[i] = samplers[i]->GetFalloffWeight(x, y);
         falloff_sum += falloffs[i];
       }
 
       for (size_t i = 0; i < samplers.size(); i++) {
-        acc += samplers[i]->SampleSplat(x, y, index) * (falloffs[i] / falloff_sum);
+        acc += samplers[i]->SampleSplat(x, y, index);
       }
+
+      acc = glm::clamp(acc, 0.0, 1.0);
 
       return acc;
     }
