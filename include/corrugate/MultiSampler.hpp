@@ -50,15 +50,18 @@ namespace cg {
     }
 
     void FetchPoint(const glm::dvec2& point, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
-      FetchRange(point, glm::dvec2(0), output);
+      // narrow bounds here instead??
+      FetchRange(point - glm::dvec2(0.5), glm::dvec2(1), output);
     }
 
     // fetch all boxes within a certain range
     void FetchRange(const glm::dvec2& origin, const glm::dvec2& size, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
       glm::dvec2 end = origin + size;
 
-      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor(origin / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
-      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil(end / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+      // add an epsilon i think?
+
+      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor((origin - DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil((end + DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
 
       // zlup - this section of code recurs a ton
       std::lock_guard<std::recursive_mutex> lock(sampler_lock);
@@ -123,8 +126,8 @@ namespace cg {
       glm::dvec2 origin = res->GetOrigin();
       glm::dvec2 end = origin + res->GetSize();
 
-      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor(origin / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
-      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil(end / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor((origin - DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil((end + DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
 
 
       std::lock_guard<std::recursive_mutex> lock(sampler_lock);
@@ -149,12 +152,13 @@ namespace cg {
 
 
    private:
+    static const glm::dvec2 DVEC_EPSILON = glm::dvec2(0.00001);
     void InsertBoxPointer(const std::shared_ptr<BoxType>& box) {
       glm::dvec2 origin = box->origin;
       glm::dvec2 end = box->GetEnd();
 
-      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor(origin / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
-      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil(end / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+      glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor((origin - DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
+      glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil((end + DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
 
       std::lock_guard<std::recursive_mutex> lock(sampler_lock);
       for (int x = chunk_floor.x; x < chunk_ceil.x; x++) {
