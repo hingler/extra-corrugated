@@ -152,7 +152,7 @@ namespace cg {
 
 
    private:
-    static const glm::dvec2 DVEC_EPSILON = glm::dvec2(0.00001);
+    static constexpr glm::dvec2 DVEC_EPSILON = glm::dvec2(0.00001);
     void InsertBoxPointer(const std::shared_ptr<BoxType>& box) {
       glm::dvec2 origin = box->origin;
       glm::dvec2 end = box->GetEnd();

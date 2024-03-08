@@ -47,7 +47,7 @@ namespace cg {
         acc += samplers[i]->SampleSplat(x, y, index);
       }
 
-      acc = glm::clamp(acc, 0.0, 1.0);
+      acc = glm::clamp(acc, glm::vec4(0.0), glm::vec4(1.0));
 
       return acc;
     }
