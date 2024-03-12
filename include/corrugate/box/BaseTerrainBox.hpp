@@ -83,7 +83,7 @@ namespace cg {
       size_t elements_written = bytes_written / sizeof(glm::vec4);
 
       // test: don't apply falloff to splat data - think it's avg'ing
-      // ApplyFalloff<glm::vec4>(origin_relative, sample_dims, scale, output, elements_written, falloffs);
+      ApplyFalloff<glm::vec4>(origin_relative, sample_dims, scale, output, elements_written, nullptr);
       return bytes_written;
     };
 
