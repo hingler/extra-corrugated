@@ -20,7 +20,7 @@ namespace cg {
     public:
     /**
      * @brief Binds a group of samplers to a specified splat index.
-     * 
+     *
      * @tparam sR - red sampler
      * @tparam sG - green sampler
      * @tparam sB - blue sampler
@@ -39,16 +39,25 @@ namespace cg {
       const std::shared_ptr<sA>& a,
       size_t splat_index
     ) {
-      if (writers_.size() < (splat_index + 1)) {
-        writers_.resize(splat_index + 1);
-      }
+      EnsureCapacity(splat_index);
       writers_[splat_index] = std::make_unique<impl::SplatWriterImpl<sR, sG, sB, sA>>(
         r, g, b, a
       );
     }
 
+    template <typename Splat>
+    void BindSampler(
+      const std::shared_ptr<Splat>& s,
+      size_t splat_index
+    ) {
+      EnsureCapacity(splat_index);
+      writers_[splat_index] = std::make_unique<impl::SingleSplatWriter<Splat>>(
+        s
+      );
+    }
+
     // thinking: pass in number of samplers to pull, for consistency (don't write if not avail)
-    
+
     bool HasSampler(size_t splat_index) const {
       return splat_index >= 0 && splat_index < writers_.capacity() && writers_[splat_index] != nullptr;
     }
@@ -58,7 +67,7 @@ namespace cg {
 
     /**
      * @brief Writes splat contents to an output buffer.
-     * 
+     *
      * @param size - size of output, in px
      * @param offset - offset applied to bottom left corner of image
      * @param scale - distance between pixel samples
@@ -74,7 +83,7 @@ namespace cg {
       return true;
     }
 
-    glm::vec4 Sample(double x, double y, size_t index) {
+    glm::vec4 Sample(double x, double y, size_t index) const {
       if (!HasSampler(index)) {
         return glm::vec4(0);
       }
@@ -84,7 +93,12 @@ namespace cg {
 
     // tba: write a simple "splat test" which just puts some sample data in an image
 
-    private:
+   private:
+    void EnsureCapacity(size_t splat_index) {
+      if (writers_.size() < (splat_index + 1)) {
+        writers_.resize(splat_index + 1);
+      }
+    }
     std::vector<std::unique_ptr<impl::SplatWriter>> writers_;
   };
 }
