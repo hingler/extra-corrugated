@@ -9,7 +9,7 @@ namespace cg {
       public:
       /**
        * @brief Writes writer's contents to passed float output
-       * 
+       *
        * @param size - size of output image
        * @param offset - offset applied to samplers
        * @param scale - distance between pixels

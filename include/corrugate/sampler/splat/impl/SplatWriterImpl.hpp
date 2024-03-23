@@ -12,6 +12,36 @@
 
 namespace cg {
   namespace impl {
+    template <typename Splat>
+    class SingleSplatWriter : public SplatWriter {
+     public:
+      SingleSplatWriter(
+        const std::shared_ptr<Splat>& splat,
+        size_t index
+      ) : splat(splat), index(index) {}
+
+      void Write(const glm::ivec2& size, const glm::dvec2& offset, const glm::dvec2& scale, float* output) const override {
+        glm::vec4* wptr = reinterpret_cast<glm::vec4*>(output);
+        glm::dvec2 sample_pos;
+        glm::dvec2 half_scale = scale * 0.5;
+        for (int y = 0; y < size.y; ++y) {
+          sample_pos.y = offset.y + scale.y * y + half_scale.y;
+          for (int x = 0; x < size.x; ++x) {
+            sample_pos.x = offset.x + scale.x * x + half_scale.x;
+            *wptr = splat->Sample(sample_pos.x, sample_pos.y, index);
+            ++wptr;
+          }
+        }
+      }
+
+      glm::vec4 Sample(double x, double y) override {
+        return splat->Sample(x, y, index);
+      }
+     private:
+      std::shared_ptr<Splat> splat;
+      size_t index;
+    };
+
     /**
      * @brief virtual
      *
