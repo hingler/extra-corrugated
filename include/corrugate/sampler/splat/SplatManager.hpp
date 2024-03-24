@@ -52,7 +52,8 @@ namespace cg {
     ) {
       EnsureCapacity(splat_index);
       writers_[splat_index] = std::make_unique<impl::SingleSplatWriter<Splat>>(
-        s
+        s,
+        splat_index
       );
     }
 

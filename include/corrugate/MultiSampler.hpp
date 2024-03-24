@@ -59,11 +59,13 @@ namespace cg {
       glm::dvec2 end = origin + size;
 
       // add an epsilon i think?
+      // idea1: "pre-prep" the cache by collecting all boxes in some broad range (wrap)
+      // idea2: idk!
 
       glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor((origin - DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
       glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil((end + DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
 
-      // zlup - this section of code recurs a ton
+      // possible lock contention here??
       std::lock_guard<std::recursive_mutex> lock(sampler_lock);
 
       glm::dvec2 box_origin, box_end;

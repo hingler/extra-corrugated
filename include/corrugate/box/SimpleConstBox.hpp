@@ -11,11 +11,11 @@ namespace cg {
 
       }
 
-      float Sample(double x, double y) {
+      float Sample(double x, double y) const {
         return val;
       }
 
-      glm::vec4 Sample(double x, double y, size_t index) {
+      glm::vec4 Sample(double x, double y, size_t index) const {
         return glm::vec4(val);
       }
 

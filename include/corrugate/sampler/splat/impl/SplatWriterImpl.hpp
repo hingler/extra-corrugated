@@ -9,21 +9,27 @@
 #include <memory>
 
 #include "corrugate/sampler/splat/impl/SplatWriter.hpp"
+#include "corrugate/traits/chunk_write_trait.hpp"
+
+#include <gog43/Logger.hpp>
 
 namespace cg {
   namespace impl {
-    template <typename Splat>
-    class SingleSplatWriter : public SplatWriter {
+
+    template <typename Splat, typename Enable = void>
+    class SingleSplatChunkWriteDelegate {
      public:
-      SingleSplatWriter(
+      SingleSplatChunkWriteDelegate(
         const std::shared_ptr<Splat>& splat,
         size_t index
       ) : splat(splat), index(index) {}
 
-      void Write(const glm::ivec2& size, const glm::dvec2& offset, const glm::dvec2& scale, float* output) const override {
+      void Write(const glm::ivec2& size, const glm::dvec2& offset, const glm::dvec2& scale, float* output) const {
+        gog43::print("using single write :/");
         glm::vec4* wptr = reinterpret_cast<glm::vec4*>(output);
         glm::dvec2 sample_pos;
         glm::dvec2 half_scale = scale * 0.5;
+
         for (int y = 0; y < size.y; ++y) {
           sample_pos.y = offset.y + scale.y * y + half_scale.y;
           for (int x = 0; x < size.x; ++x) {
@@ -32,6 +38,55 @@ namespace cg {
             ++wptr;
           }
         }
+      }
+
+     private:
+      std::shared_ptr<Splat> splat;
+      size_t index;
+    };
+
+    // should have written the specialization as a separate method lole
+    // lgtm : )
+    // specialization if chunk write supported
+    template <typename Splat>
+    class SingleSplatChunkWriteDelegate<
+      Splat,
+      typename std::enable_if_t<trait::splat_chunk_trait<Splat>::value>
+    > {
+     public:
+      SingleSplatChunkWriteDelegate(
+        const std::shared_ptr<Splat>& splat,
+        size_t index
+      ) : splat(splat), index(index) {}
+
+      void Write(const glm::ivec2& size, const glm::dvec2& offset, const glm::dvec2& scale, float* output) const {
+        gog43::print("using bulk write!");
+        splat->WriteSplat(
+          offset,
+          size,
+          scale.x,
+          index,
+          reinterpret_cast<glm::vec4*>(output),
+          (size.x * size.y * sizeof(glm::vec4))
+        );
+      }
+     private:
+      std::shared_ptr<Splat> splat;
+      size_t index;
+    };
+
+
+    template <typename Splat, typename Enable = void>
+    class SingleSplatWriter : public SplatWriter {
+     public:
+      SingleSplatWriter(
+        const std::shared_ptr<Splat>& splat,
+        size_t index
+      ) : splat(splat), index(index) {}
+
+      void Write(const glm::ivec2& size, const glm::dvec2& offset, const glm::dvec2& scale, float* output) const override {
+        SingleSplatChunkWriteDelegate<Splat> del(splat, index);
+        del.Write(size, offset, scale, output);
       }
 
       glm::vec4 Sample(double x, double y) override {
