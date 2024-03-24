@@ -35,7 +35,13 @@ namespace cg {
 
     // prob not gonna test this
 
-    size_t WriteChunk(const glm::dvec2& origin, const glm::ivec2& sample_dims, double scale, DataType* output, size_t n_bytes) const override {
+    size_t WriteChunk(
+      const glm::dvec2& origin,
+      const glm::ivec2& sample_dims,
+      double scale,
+      DataType* output,
+      size_t n_bytes
+    ) const override {
       size_t required_space = sample_dims.x * sample_dims.y * sizeof(DataType);
       if (required_space > n_bytes) {
         return 0;
