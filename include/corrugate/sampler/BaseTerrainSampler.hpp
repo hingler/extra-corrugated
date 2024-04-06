@@ -17,11 +17,12 @@ namespace cg {
     BaseTerrainSampler(
       std::shared_ptr<HeightType> heightmap,
       std::shared_ptr<SplatType> splat,
-      std::shared_ptr<TreeFillType> tree_fill
+      std::shared_ptr<TreeFillType> tree_fill,
+      const glm::dvec2& size = glm::dvec2(-1.0)
     ) :
-      height_(std::make_unique<SampleWriterGenericImpl<float, HeightType>>(heightmap)),
-      splat_(std::make_unique<IndexedSampleWriterGenericImpl<glm::vec4, SplatType>>(splat)),
-      tree_fill_(std::make_unique<SampleWriterGenericImpl<float, TreeFillType>>(tree_fill))
+      height_(std::make_unique<SampleWriterGenericImpl<float, HeightType>>(heightmap, size)),
+      splat_(std::make_unique<IndexedSampleWriterGenericImpl<glm::vec4, SplatType>>(splat, size)),
+      tree_fill_(std::make_unique<SampleWriterGenericImpl<float, TreeFillType>>(tree_fill, size))
     {}
 
     float SampleHeight(double x, double y) const {
@@ -42,7 +43,7 @@ namespace cg {
     size_t WriteHeight(
       const glm::dvec2& origin,
       const glm::ivec2& sample_dims,
-      const chunker::util::Fraction& scale,
+      double scale,
       float* output,
       size_t n_bytes
     ) const {
@@ -54,19 +55,18 @@ namespace cg {
     size_t WriteSplat(
       const glm::dvec2& origin,
       const glm::ivec2& sample_dims,
-      const chunker::util::Fraction& scale,
+      double scale,
       size_t index,
       glm::vec4* output,
       size_t n_bytes
     ) const {
-      // why tf did i do this (oh - because indices didn't really work)
-      return splat_->WriteChunk(origin, sample_dims, scale.AsDouble(), index, output, n_bytes);
+      return splat_->WriteChunk(origin, sample_dims, scale, index, output, n_bytes);
     }
 
     size_t WriteTreeFill(
       const glm::dvec2& origin,
       const glm::ivec2& sample_dims,
-      const chunker::util::Fraction& scale,
+      double scale,
       float* output,
       size_t n_bytes
     ) const {

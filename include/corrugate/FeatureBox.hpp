@@ -36,6 +36,24 @@ namespace cg {
 
     glm::dvec2 GetEnd() const { return origin + size; }
 
+    bool Contains(double x, double y) const {
+      return Contains(glm::dvec2(x, y));
+    }
+
+    bool Contains(const glm::dvec2& point) const {
+      glm::dvec2 local = point - origin;
+      return Contains_Local(local);
+    }
+
+    bool Contains_Local(const glm::dvec2& point) const {
+      if (size.x >= 0.0 && size.y >= 0.0) {
+        return !(point.x < 0.0 || point.x > size.x || point.y < 0.0 || point.y > size.y);
+      }
+
+      // bullshit hack hehe
+      return true;
+    }
+
     float GetFalloffWeight(double x, double y) const {
       return GetFalloffWeight(glm::dvec2(x, y));
     }

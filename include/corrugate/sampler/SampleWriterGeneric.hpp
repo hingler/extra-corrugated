@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 
+#include "corrugate/FeatureBox.hpp"
 #include "corrugate/sampler/SingleIndexSplatManager.hpp"
 
 // for splat manager: how to handle?
@@ -27,13 +28,18 @@ namespace cg {
   template <typename DataType, typename SamplerType>
   class SampleWriterGenericImpl : public SampleWriterGeneric<DataType> {
    public:
-    SampleWriterGenericImpl(std::shared_ptr<SamplerType> sampler) : sampler_(sampler) {}
+    SampleWriterGenericImpl(
+      std::shared_ptr<SamplerType> sampler,
+      const glm::dvec2& size = glm::dvec2(-1.0)
+    ) : sampler_(sampler), box(glm::dvec2(0), size) {}
 
     DataType Sample(double x, double y) const override {
-      return sampler_->Sample(x, y);
+      if (box.Contains_Local(glm::dvec2(x, y))) {
+        return sampler_->Sample(x, y);
+      } else {
+        return DataType();
+      }
     }
-
-    // prob not gonna test this
 
     size_t WriteChunk(
       const glm::dvec2& origin,
@@ -56,9 +62,14 @@ namespace cg {
 
       for (int y = 0; y < sample_dims.y; y++) {
         for (int x = 0; x < sample_dims.x; x++) {
+          int index = y * sample_dims.x + x;
           pos.x = origin.x + x * scale_d;
           pos.y = origin.y + y * scale_d;
-          output[y * sample_dims.x + x] = sampler_->Sample(pos.x, pos.y);
+          if (box.Contains_Local(pos)) {
+            output[index] = sampler_->Sample(pos.x, pos.y);
+          } else {
+            output[index] = DataType();
+          }
         }
       }
 
@@ -66,14 +77,19 @@ namespace cg {
     }
    private:
     std::shared_ptr<SamplerType> sampler_;
+    cg::FeatureBox box;
   };
 
   template <typename DataType, typename SplatType>
   class IndexedSampleWriterGenericImpl : public IndexedSampleWriterGeneric<DataType> {
    public:
-    IndexedSampleWriterGenericImpl(std::shared_ptr<SplatType> splat) : splat_(splat) {}
+    IndexedSampleWriterGenericImpl(std::shared_ptr<SplatType> splat, const glm::dvec2& size) : splat_(splat), box(glm::dvec2(0), size) {}
     DataType Sample(double x, double y, size_t index) const override {
-      return splat_->Sample(x, y, index);
+      if (box.Contains_Local(glm::dvec2(x, y))) {
+        return splat_->Sample(x, y, index);
+      }
+
+      return DataType();
     }
 
     size_t WriteChunk(
@@ -84,7 +100,12 @@ namespace cg {
       DataType* output,
       size_t n_bytes
     ) const override {
-      SampleWriterGenericImpl<DataType, SingleIndexSplatManager<SplatType>> temp(std::make_shared<SingleIndexSplatManager<SplatType>>(splat_, index));
+      SampleWriterGenericImpl<DataType, SingleIndexSplatManager<SplatType>> temp(
+        std::make_shared<SingleIndexSplatManager<SplatType>>(
+          splat_, index
+        ),
+        box.GetSize()
+      );
       return temp.WriteChunk(
         origin,
         sample_dims,
@@ -95,6 +116,7 @@ namespace cg {
     }
    private:
     std::shared_ptr<SplatType> splat_;
+    cg::FeatureBox box;
   };
 }
 

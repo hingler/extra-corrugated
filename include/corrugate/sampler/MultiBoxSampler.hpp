@@ -2,6 +2,7 @@
 #define MULTI_BOX_SAMPLER_H_
 
 #include "corrugate/box/SamplerBox.hpp"
+#include "glm/ext/vector_common.hpp"
 
 #include <glm/glm.hpp>
 
@@ -123,18 +124,21 @@ namespace cg {
       }
 
       glm::vec4* temp = new glm::vec4[elems];
-      float* falloffs = new float[elems];
+      // float* falloffs = new float[elems];
+
       memset(temp, 0, bytes);
       memset(output, 0, bytes);
-      WriteFalloffSum(
-        origin,
-        sample_dims,
-        scale,
-        falloffs,
-        elems * sizeof(float)
-      );
 
-      DataSampler<float> falloff_sampler(sample_dims, falloffs);
+      // we don't want this...
+      // WriteFalloffSum(
+      //   origin,
+      //   sample_dims,
+      //   scale,
+      //   falloffs,
+      //   elems * sizeof(float)
+      // );
+
+      // DataSampler<float> falloff_sampler(sample_dims, falloffs);
 
       for (auto& sampler : samplers) {
         sampler->WriteSplat(
@@ -144,7 +148,7 @@ namespace cg {
           index,
           temp,
           n_bytes,
-          &falloff_sampler
+          nullptr
         );
 
         for (size_t i = 0; i < elems; i++) {
@@ -152,8 +156,12 @@ namespace cg {
         }
       }
 
+      // // clamp result
+      // for (size_t i = 0; i < elems; i++) {
+      //   output[i] = glm::clamp(output[i]);
+      // }
+
       delete[] temp;
-      delete[] falloffs;
 
       return bytes;
     }
@@ -211,7 +219,9 @@ namespace cg {
     float SampleFalloffSum(const glm::dvec2& coords) const {
       float acc = 0.0f;
       for (auto& sampler : samplers) {
-        acc += sampler->GetFalloffWeight(coords);
+        if (sampler->Contains(coords)) {
+          acc += sampler->GetFalloffWeight(coords);
+        }
       }
 
       return acc;

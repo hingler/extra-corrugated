@@ -33,15 +33,23 @@ namespace cg {
 
       float falloffs[samplers.size()];
       float falloff_sum = 0.0f;
+
+      glm::dvec2 point(x, y);
       for (size_t i = 0; i < samplers.size(); i++) {
-        falloffs[i] = samplers[i]->GetFalloffWeight(x, y);
-        falloff_sum += falloffs[i];
+        if (samplers[i]->Contains(point)) {
+          falloffs[i] = samplers[i]->GetFalloffWeight(x, y);
+          falloff_sum += falloffs[i];
+        } else {
+          falloffs[i] = 0.0f;
+        }
       }
 
       falloff_sum = std::max(falloff_sum, 0.000001f);
 
       for (size_t i = 0; i < samplers.size(); i++) {
-        acc += samplers[i]->GetSmoothDelta(x, y, underlying) * (falloffs[i] / falloff_sum);
+        if (falloffs[i] > 0.00001f) {
+          acc += samplers[i]->GetSmoothDelta(x, y, underlying) * (falloffs[i] / falloff_sum);
+        }
       }
 
       return acc;

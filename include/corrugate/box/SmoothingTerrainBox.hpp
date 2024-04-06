@@ -2,10 +2,12 @@
 #define SMOOTHING_TERRAIN_BOX_H_
 
 #include "corrugate/box/BaseTerrainBox.hpp"
+#include "corrugate/box/SimpleConstBox.hpp"
 #include "corrugate/sampler/SmoothingTerrainSampler.hpp"
 #include "corrugate/box/BaseSmoothingSamplerBox.hpp"
 
 #include "corrugate/sampler/DataSampler.hpp"
+#include "gog43/Logger.hpp"
 
 namespace cg {
   // extend baseterrain
@@ -28,6 +30,21 @@ namespace cg {
       std::shared_ptr<FillType> fill,
       float smoothing_factor
     ) : SmoothingTerrainBox(
+      box,
+      heightmap,
+      splat,
+      fill,
+      std::make_shared<_impl::ConstSampler>(smoothing_factor)
+    ) {};
+
+    template <typename HeightType, typename SplatType, typename FillType, typename SmoothType>
+    SmoothingTerrainBox(
+      const cg::FeatureBox& box,
+      const std::shared_ptr<HeightType>& heightmap,
+      const std::shared_ptr<SplatType>& splat,
+      const std::shared_ptr<FillType>& fill,
+      const std::shared_ptr<SmoothType>& smooth
+    ) : SmoothingTerrainBox(
       box.GetOrigin(),
       box.GetSize(),
       heightmap,
@@ -35,10 +52,11 @@ namespace cg {
       fill,
       box.falloff_radius,
       box.falloff_size,
-      smoothing_factor
-    ) {};
+      smooth
+    ) {}
 
-    template <typename HeightType, typename SplatType, typename FillType>
+
+    template <typename HeightType, typename SplatType, typename FillType, typename SmoothType>
     SmoothingTerrainBox(
       const glm::dvec2& origin,
       const glm::dvec2& size,
@@ -47,15 +65,13 @@ namespace cg {
       std::shared_ptr<FillType> fill,
       float falloff_radius,
       float falloff_dist,
-      float smoothing_factor
+      const std::shared_ptr<SmoothType>& smooth
     ) :
     BaseTerrainBox(origin, size, heightmap, splat, fill, falloff_radius, falloff_dist),
     BaseSmoothingSamplerBox(origin, size, falloff_radius, falloff_dist),
     SamplerBox(origin, size, falloff_radius, falloff_dist),   // v base class ctor
-    smoother(*this),
-    smoothing_factor(smoothing_factor) {
-      smoother.smoothing_factor = smoothing_factor;
-    }
+    smoother(*this, smooth),
+    smoothing_factor(0.0) {}
 
     template <typename BaseType>
     void PrepareCache(const std::shared_ptr<BaseType>& sampler) {
@@ -84,12 +100,6 @@ namespace cg {
         return 0;
       }
 
-      // should we be applying falloff values here, or later?
-      // - i was under the impression that we were lol
-
-      // sum all falloffs (1)
-      // sample smooth (2) and divide by falloff (3)
-
       assert(underlying_data.data_size.x >= sample_dims.x);
       assert(underlying_data.data_size.y >= sample_dims.y);
 
@@ -104,9 +114,13 @@ namespace cg {
         local_coord.y = local_origin.y + static_cast<double>(y) * scale;
         for (int x = 0; x < sample_dims.x; x++) {
           local_coord.x = local_origin.x + static_cast<double>(x) * scale;
-          float falloff = GetFalloffWeight_local(local_coord);
-          float falloff_sum = std::max(falloff_sums.Get(x, y), 0.00001f);
-          output[y * sample_dims.x + x] = smoother.Smooth(underlying_data.Get(x, y)) * falloff * (falloff / falloff_sum);
+          if (Contains_Local(local_coord)) {
+            float falloff = GetFalloffWeight_local(local_coord);
+            float falloff_sum = std::max(falloff_sums.Get(x, y), 0.00001f);
+            output[y * sample_dims.x + x] = smoother.Smooth(underlying_data.Get(x, y)) * falloff * (falloff / falloff_sum);
+          } else {
+            output[y * sample_dims.x + x] = 0.0f;
+          }
         }
       }
 

@@ -3,6 +3,7 @@
 
 #include "corrugate/box/SamplerBox.hpp"
 #include "corrugate/sampler/BaseTerrainSampler.hpp"
+#include "gog43/Logger.hpp"
 
 namespace cg {
   // inheritance tree
@@ -20,7 +21,7 @@ namespace cg {
       float falloff_radius,
       float falloff_dist
     ) : SamplerBox(origin, size, falloff_radius, falloff_dist),
-        sampler(heightmap, splat, fill) {}
+        sampler(heightmap, splat, fill, size) {}
 
 
     float SampleHeight(double x, double y)                   const override {
@@ -28,24 +29,40 @@ namespace cg {
       auto origin = GetOrigin();
       glm::dvec2 local_coord(x - origin.x, y - origin.y);
 
-      float falloff_weight = GetFalloffWeight_local(local_coord);
-      return sampler.SampleHeight(local_coord.x, local_coord.y) * falloff_weight;
+      if (Contains_Local(local_coord)) {
+        float falloff_weight = GetFalloffWeight_local(local_coord);
+        if ((local_coord.x < 0.0 || local_coord.y < 0.0) && GetSize().x >= 0.0) {
+          gog43::print("shouldn't be drawing!");
+        }
+
+        return sampler.SampleHeight(local_coord.x, local_coord.y) * falloff_weight;
+      }
+
+      return 0.0;
     };
 
     glm::vec4 SampleSplat(double x, double y, size_t index)     const override {
       auto origin = GetOrigin();
       glm::dvec2 local_coord(x - origin.x, y - origin.y);
-  
-      float falloff_weight = GetFalloffWeight_local(local_coord);
-      return sampler.SampleSplat(local_coord.x, local_coord.y, index) * falloff_weight;
+
+      if (Contains_Local(local_coord)) {
+        float falloff_weight = GetFalloffWeight_local(local_coord);
+        return sampler.SampleSplat(local_coord.x, local_coord.y, index) * falloff_weight;
+      }
+
+      return glm::vec4(0.0);
     };
 
     float SampleTreeFill( double x, double y)                   const override {
       auto origin = GetOrigin();
       glm::dvec2 local_coord(x - origin.x, y - origin.y);
 
-      float falloff_weight = GetFalloffWeight_local(local_coord);
-      return sampler.SampleTreeFill(local_coord.x, local_coord.y) * falloff_weight;
+      if (Contains_Local(local_coord)) {
+        float falloff_weight = GetFalloffWeight_local(local_coord);
+        return sampler.SampleTreeFill(local_coord.x, local_coord.y) * falloff_weight;
+      }
+
+      return 0.0;
     };
 
 
@@ -79,7 +96,7 @@ namespace cg {
       const DataSampler<float>* falloffs
     ) const override {
       glm::dvec2 origin_relative = origin - GetOrigin();
-      size_t bytes_written = sampler.WriteSplat(origin_relative, sample_dims,scale, index, output, n_bytes);
+      size_t bytes_written = sampler.WriteSplat(origin_relative, sample_dims, scale, index, output, n_bytes);
       size_t elements_written = bytes_written / sizeof(glm::vec4);
 
       // test: don't apply falloff to splat data - think it's avg'ing

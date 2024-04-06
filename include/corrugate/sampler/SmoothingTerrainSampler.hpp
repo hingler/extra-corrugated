@@ -2,6 +2,9 @@
 #define SMOOTHING_TERRAIN_SAMPLER_H_
 
 #include "corrugate/FeatureBox.hpp"
+#include "corrugate/box/SimpleConstBox.hpp"
+
+#include "corrugate/sampler/SampleWriterGeneric.hpp"
 
 #include <algorithm>
 #include <mutex>
@@ -12,33 +15,33 @@ namespace cg {
    public:
     // box param doesn't work
     // eventually: option to provide a max slope
+
     SmoothingTerrainSampler(
-      const FeatureBox& box
-    ) : box_(box) {}
+      const FeatureBox& box,
+      double factor
+    ) : SmoothingTerrainSampler(box, std::make_shared<_impl::ConstSampler>(factor)) {}
+
+    template <typename SmoothType>
+    SmoothingTerrainSampler(
+      const FeatureBox& box,
+      const std::shared_ptr<SmoothType>& smooth
+    ) : box_(box), sampler(std::make_unique<SampleWriterGenericImpl<float, SmoothType>>(smooth)) {}
 
     template <typename BaseType>
-    void PrepareCache(const std::shared_ptr<BaseType>& sampler) {
+    void PrepareCache(const std::shared_ptr<BaseType>& sampler) const {
       CalculateOrigin(sampler);
     }
 
 
     double Smooth(double input) const {
-
-      double delta = height_origin - input;
-
-      // should we build this functionality into the box itself?
-
-      return delta * smoothing_factor;
+      return Smooth(input, sampler->Sample(0.0, 0.0));
     }
 
-    // 1.0: completely flat
-    // 0.0: no smoothing
+    double Smooth(double input, double fac) const {
+      double delta = height_origin - input;
+      return delta * fac;
+    }
 
-    // tba: replace this with a smoothing sampler (or a const sampler, if not provided)
-    // LOTS of ctor args :-)
-
-    // replace smoothing factor with a "max slope" estimated from gradient vecs
-    double smoothing_factor = 0.0;
    private:
     static constexpr double MAX_SLOPE = 0.09;
     mutable double height_origin = 0.0;
@@ -48,6 +51,10 @@ namespace cg {
 
     // this doesn't work lole
     FeatureBox box_;
+    std::unique_ptr<SampleWriterGeneric<float>> sampler;
+
+    // is gradient too expensive here?
+    // instead: calculate algorithmically!!!
 
 
     glm::dvec2 GetHammersley(unsigned int x, unsigned int n, const glm::dvec2& origin, const glm::dvec2& size) const {
@@ -103,6 +110,8 @@ namespace cg {
 
       }
 
+      // idea1: calculate gradient, and smooth based on it
+      //
       // safe keeping for now
       secret_smoothing_factor = 1.0 - (MAX_SLOPE / max_slope);
       height_origin = height_sum;
