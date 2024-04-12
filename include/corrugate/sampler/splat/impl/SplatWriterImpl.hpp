@@ -60,7 +60,6 @@ namespace cg {
       ) : splat(splat), index(index) {}
 
       void Write(const glm::ivec2& size, const glm::dvec2& offset, const glm::dvec2& scale, float* output) const {
-        gog43::print("using bulk write!");
         splat->WriteSplat(
           offset,
           size,
