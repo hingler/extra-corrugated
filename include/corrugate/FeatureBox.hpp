@@ -77,11 +77,11 @@ namespace cg {
 
    protected:
     float GetFalloffWeight_local(const glm::dvec2& point_local) const {
-      // epsilon :3
-      glm::dvec2 half_size = glm::max(GetSize() * 0.5, glm::dvec2(0.001));
-      glm::dvec2 coords_local = (point_local - half_size) / half_size;
+      // -1 -> 1
+      glm::dvec2 coords_local = (point_local / glm::max(GetSize(), glm::dvec2(0.001))) * 2.0 - 1.0;
 
       // one norm
+      // dist = max cmpt (abs)
       float dist = static_cast<float>(glm::max(glm::abs(coords_local.x), glm::abs(coords_local.y)));
       // dist at which falloff begins ('falloff size' to 1.0 along 'falloff_radius')
       // avoid 1.0 case - breaks it

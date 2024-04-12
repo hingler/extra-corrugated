@@ -25,6 +25,10 @@ namespace cg {
     // - i guess in either case, we're doing the same amount of work:
     // - either this does the fetch, or someone else does
     // stitch the two together at the end
+    float GetFalloffWeight(double x, double y) const {
+      return wrap.GetFalloffWeight(x, y);
+    }
+
     float SampleHeight(double x, double y, double underlying) const {
       float acc = 0.0f;
       acc += wrap.SampleHeight(x, y);
@@ -61,6 +65,10 @@ namespace cg {
 
     float SampleTreeFill(double x, double y) const {
       return wrap.SampleTreeFill(x, y);
+    }
+
+    float SampleGrassFill(double x, double y) const {
+      return wrap.SampleGrassFill(x, y);
     }
 
     size_t WriteHeight(

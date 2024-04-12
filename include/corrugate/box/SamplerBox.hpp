@@ -28,7 +28,7 @@ namespace cg {
     virtual float SampleHeight(   double x, double y) const = 0;
     virtual glm::vec4 SampleSplat(double x, double y, size_t index)     const = 0;
     virtual float SampleTreeFill( double x, double y)                   const = 0;
-
+    virtual float SampleGrassFill(double x, double y) const = 0;
     /**
      * @brief Writes a chunk of data
      *
@@ -42,6 +42,7 @@ namespace cg {
     virtual size_t WriteHeight(   const glm::dvec2& origin, const glm::ivec2& sample_dims, double scale,                float* output,      size_t n_bytes) const = 0;
     virtual size_t WriteSplat(    const glm::dvec2& origin, const glm::ivec2& sample_dims, double scale, size_t index,  glm::vec4* output,  size_t n_bytes, const DataSampler<float>* falloffs) const = 0;
     virtual size_t WriteTreeFill( const glm::dvec2& origin, const glm::ivec2& sample_dims, double scale,                float* output,      size_t n_bytes, const DataSampler<float>* falloffs) const = 0;
+    virtual size_t WriteGrassFill(const glm::dvec2& origin, const glm::ivec2& sample_dims, double scale,                float* output,      size_t n_bytes) const = 0;
   };
 }
 

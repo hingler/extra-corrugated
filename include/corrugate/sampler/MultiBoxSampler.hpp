@@ -4,6 +4,7 @@
 #include "corrugate/box/SamplerBox.hpp"
 #include "glm/ext/vector_common.hpp"
 
+#include <algorithm>
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -22,6 +23,15 @@ namespace cg {
 
     template <>
     MultiBoxSampler(const std::vector<std::shared_ptr<const BoxType>>& contents) : samplers(contents) {}
+
+    float GetFalloffWeight(double x, double y) const {
+      float acc = 0.0f;
+      for (auto& sampler : samplers) {
+        acc += sampler->GetFalloffWeight(x, y);
+      }
+
+      return acc;
+    }
 
     float SampleHeight(double x, double y) const {
       float acc = 0.0f;
@@ -66,6 +76,19 @@ namespace cg {
       // how do we want to do this? probably another weighted average (tba)
       for (size_t i = 0; i < samplers.size(); i++) {
         acc += (samplers[i]->SampleTreeFill(x, y) * (falloffs[i] / falloff_sum));
+      }
+
+      return acc;
+    }
+
+    float SampleGrassFill(double x, double y) const {
+      float acc = 1.0f;
+      // default to 1.0 - tick down from there, based on reqs
+      // returns 0.0 - index references sampler but we're not "inside" it so we get a "0" ret
+      for (size_t i = 0; i < samplers.size(); i++) {
+        if (samplers[i]->Contains(x, y)) {
+          acc = std::min(samplers[i]->SampleGrassFill(x, y), acc);
+        }
       }
 
       return acc;

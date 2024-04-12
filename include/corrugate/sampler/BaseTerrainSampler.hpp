@@ -13,16 +13,18 @@ namespace cg {
   // base sampler for a terrain box
   class BaseTerrainSampler {
    public:
-    template <typename HeightType, typename SplatType, typename TreeFillType>
+    template <typename HeightType, typename SplatType, typename TreeFillType, typename GrassFillType>
     BaseTerrainSampler(
       std::shared_ptr<HeightType> heightmap,
       std::shared_ptr<SplatType> splat,
       std::shared_ptr<TreeFillType> tree_fill,
+      const std::shared_ptr<GrassFillType> grass_fill,
       const glm::dvec2& size = glm::dvec2(-1.0)
     ) :
       height_(std::make_unique<SampleWriterGenericImpl<float, HeightType>>(heightmap, size)),
       splat_(std::make_unique<IndexedSampleWriterGenericImpl<glm::vec4, SplatType>>(splat, size)),
-      tree_fill_(std::make_unique<SampleWriterGenericImpl<float, TreeFillType>>(tree_fill, size))
+      tree_fill_(std::make_unique<SampleWriterGenericImpl<float, TreeFillType>>(tree_fill, size)),
+      grass_fill_(std::make_unique<SampleWriterGenericImpl<float, GrassFillType>>(grass_fill, size))
     {}
 
     float SampleHeight(double x, double y) const {
@@ -38,6 +40,10 @@ namespace cg {
 
     float SampleTreeFill(double x, double y) const {
       return tree_fill_->Sample(x, y);
+    }
+
+    float SampleGrassFill(double x, double y) const {
+      return grass_fill_->Sample(x, y);
     }
 
     size_t WriteHeight(
@@ -72,10 +78,21 @@ namespace cg {
     ) const {
       return tree_fill_->WriteChunk(origin, sample_dims, scale, output, n_bytes);
     }
+
+    size_t WriteGrassFill(
+      const glm::dvec2& origin,
+      const glm::ivec2& sample_dims,
+      double scale,
+      float* output,
+      size_t n_bytes
+    ) const {
+      return grass_fill_->WriteChunk(origin, sample_dims, scale, output, n_bytes);
+    }
    private:
     std::unique_ptr<SampleWriterGeneric<float>> height_;
     std::unique_ptr<IndexedSampleWriterGeneric<glm::vec4>> splat_;
     std::unique_ptr<SampleWriterGeneric<float>> tree_fill_;
+    std::unique_ptr<SampleWriterGeneric<float>> grass_fill_;
 
   };
 }

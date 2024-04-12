@@ -31,6 +31,7 @@ namespace cg {
       std::make_shared<_impl::ConstSampler>(1.0f),
       std::make_shared<_impl::ConstSampler>(0.0f),
       std::make_shared<_impl::ConstSampler>(1.0f),
+      std::make_shared<_impl::ConstSampler>(0.125f),
       1.0f,
       1.0f
     ), SamplerBox(origin, size, 1.0f, 1.0f) {}

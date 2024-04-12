@@ -22,27 +22,30 @@ namespace cg {
   // - ...so we'd need
   class SmoothingTerrainBox : public BaseTerrainBox, public BaseSmoothingSamplerBox {
    public:
-    template <typename HeightType, typename SplatType, typename FillType>
+    template <typename HeightType, typename SplatType, typename FillType, typename GrassFillType>
     SmoothingTerrainBox(
       const cg::FeatureBox& box,
       std::shared_ptr<HeightType> heightmap,
       std::shared_ptr<SplatType> splat,
       std::shared_ptr<FillType> fill,
+      const std::shared_ptr<GrassFillType>& grass_fill,
       float smoothing_factor
     ) : SmoothingTerrainBox(
       box,
       heightmap,
       splat,
       fill,
+      grass_fill,
       std::make_shared<_impl::ConstSampler>(smoothing_factor)
     ) {};
 
-    template <typename HeightType, typename SplatType, typename FillType, typename SmoothType>
+    template <typename HeightType, typename SplatType, typename FillType, typename GrassFillType, typename SmoothType>
     SmoothingTerrainBox(
       const cg::FeatureBox& box,
       const std::shared_ptr<HeightType>& heightmap,
       const std::shared_ptr<SplatType>& splat,
       const std::shared_ptr<FillType>& fill,
+      const std::shared_ptr<GrassFillType>& grass_fill,
       const std::shared_ptr<SmoothType>& smooth
     ) : SmoothingTerrainBox(
       box.GetOrigin(),
@@ -50,24 +53,26 @@ namespace cg {
       heightmap,
       splat,
       fill,
+      grass_fill,
       box.falloff_radius,
       box.falloff_size,
       smooth
     ) {}
 
 
-    template <typename HeightType, typename SplatType, typename FillType, typename SmoothType>
+    template <typename HeightType, typename SplatType, typename FillType, typename GrassFillType, typename SmoothType>
     SmoothingTerrainBox(
       const glm::dvec2& origin,
       const glm::dvec2& size,
       std::shared_ptr<HeightType> heightmap,
       std::shared_ptr<SplatType> splat,
       std::shared_ptr<FillType> fill,
+      const std::shared_ptr<GrassFillType>& grass_fill,
       float falloff_radius,
       float falloff_dist,
       const std::shared_ptr<SmoothType>& smooth
     ) :
-    BaseTerrainBox(origin, size, heightmap, splat, fill, falloff_radius, falloff_dist),
+    BaseTerrainBox(origin, size, heightmap, splat, fill, grass_fill, falloff_radius, falloff_dist),
     BaseSmoothingSamplerBox(origin, size, falloff_radius, falloff_dist),
     SamplerBox(origin, size, falloff_radius, falloff_dist),   // v base class ctor
     smoother(*this, smooth),

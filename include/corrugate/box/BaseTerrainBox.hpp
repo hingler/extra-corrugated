@@ -4,6 +4,7 @@
 #include "corrugate/box/SamplerBox.hpp"
 #include "corrugate/sampler/BaseTerrainSampler.hpp"
 #include "gog43/Logger.hpp"
+#include <functional>
 
 namespace cg {
   // inheritance tree
@@ -11,34 +12,22 @@ namespace cg {
 
   class BaseTerrainBox : virtual public SamplerBox {
    public:
-    template <typename HeightType, typename SplatType, typename FillType>
+    template <typename HeightType, typename SplatType, typename FillType, typename GrassType>
     BaseTerrainBox(
       const glm::vec2& origin,
       const glm::vec2& size,
       std::shared_ptr<HeightType> heightmap,
       std::shared_ptr<SplatType> splat,
       std::shared_ptr<FillType> fill,
+      const std::shared_ptr<GrassType>& grass,
       float falloff_radius,
       float falloff_dist
     ) : SamplerBox(origin, size, falloff_radius, falloff_dist),
-        sampler(heightmap, splat, fill, size) {}
+        sampler(heightmap, splat, fill, grass, size) {}
 
 
     float SampleHeight(double x, double y)                   const override {
-      // tba: need to handle falloff in all of these
-      auto origin = GetOrigin();
-      glm::dvec2 local_coord(x - origin.x, y - origin.y);
-
-      if (Contains_Local(local_coord)) {
-        float falloff_weight = GetFalloffWeight_local(local_coord);
-        if ((local_coord.x < 0.0 || local_coord.y < 0.0) && GetSize().x >= 0.0) {
-          gog43::print("shouldn't be drawing!");
-        }
-
-        return sampler.SampleHeight(local_coord.x, local_coord.y) * falloff_weight;
-      }
-
-      return 0.0;
+      return SampleFloatGeneric(x, y, &BaseTerrainSampler::SampleHeight);
     };
 
     glm::vec4 SampleSplat(double x, double y, size_t index)     const override {
@@ -54,17 +43,12 @@ namespace cg {
     };
 
     float SampleTreeFill( double x, double y)                   const override {
-      auto origin = GetOrigin();
-      glm::dvec2 local_coord(x - origin.x, y - origin.y);
-
-      if (Contains_Local(local_coord)) {
-        float falloff_weight = GetFalloffWeight_local(local_coord);
-        return sampler.SampleTreeFill(local_coord.x, local_coord.y) * falloff_weight;
-      }
-
-      return 0.0;
+      return SampleFloatGeneric(x, y, &BaseTerrainSampler::SampleTreeFill);
     };
 
+    float SampleGrassFill(double x, double y) const override {
+      return SampleFloatGeneric(x, y, &BaseTerrainSampler::SampleGrassFill);
+    }
 
     size_t WriteHeight(
       const glm::dvec2& origin,
@@ -75,8 +59,6 @@ namespace cg {
     ) const override {
       // get sampling origin relative
       glm::dvec2 origin_relative = origin - GetOrigin();
-
-      // tba: we can def skip negative samples
 
       size_t bytes_written = sampler.WriteHeight(origin_relative, sample_dims, scale, output, n_bytes);
       size_t elements_written = bytes_written / sizeof(float);
@@ -112,16 +94,65 @@ namespace cg {
       size_t n_bytes,
       const DataSampler<float>* falloffs
     ) const override {
+      return WriteFloatGeneric(
+        origin, sample_dims, scale, output, n_bytes, &BaseTerrainSampler::WriteTreeFill
+      );
+    };
+
+    size_t WriteGrassFill(
+      const glm::dvec2& origin,
+      const glm::ivec2& sample_dims,
+      double scale,
+      float* output,
+      size_t n_bytes
+    ) const override {
+      return WriteFloatGeneric(
+        origin, sample_dims, scale, output, n_bytes, &BaseTerrainSampler::WriteGrassFill
+      );
+    }
+
+   private:
+    BaseTerrainSampler sampler;
+
+    typedef float(BaseTerrainSampler::*sample_fnptr)(double, double) const;
+    typedef size_t(BaseTerrainSampler::*write_fnptr)(
+      const glm::dvec2&,
+      const glm::ivec2&,
+      double,
+      float*,
+      size_t
+    ) const;
+
+    float SampleFloatGeneric(
+      double x, double y, sample_fnptr samplerPointer
+    ) const {
+      auto origin = GetOrigin();
+      glm::dvec2 local_coord(x - origin.x, y - origin.y);
+
+      if (Contains_Local(local_coord)) {
+        float falloff_weight = GetFalloffWeight_local(local_coord);
+        return (sampler.*samplerPointer)(local_coord.x, local_coord.y) * falloff_weight;
+      }
+
+      return 0.0f;
+    }
+
+    size_t WriteFloatGeneric(
+      const glm::dvec2& origin,
+      const glm::ivec2& sample_dims,
+      double scale,
+      float* output,
+      size_t n_bytes,
+      write_fnptr writerPointer,
+      const DataSampler<float>* falloffs = nullptr
+    ) const {
       glm::dvec2 origin_relative = origin - GetOrigin();
-      size_t bytes_written = sampler.WriteTreeFill(origin_relative, sample_dims, scale, output, n_bytes);
+      size_t bytes_written = (sampler.*writerPointer)(origin_relative, sample_dims, scale, output, n_bytes);
       size_t elements_written = bytes_written / sizeof(float);
 
       ApplyFalloff<float>(origin_relative, sample_dims, scale, output, elements_written, falloffs);
       return bytes_written;
-    };
-
-   private:
-    BaseTerrainSampler sampler;
+    }
 
     // apply falloff to generic data type?
     template <typename FalloffDataType>
