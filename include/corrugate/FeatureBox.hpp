@@ -13,6 +13,7 @@
 // - that being said: we should support roughly the same interface for fairway, green, sand, etc...
 // - we should associate SDFs with boxes (i think sdfs for green, rough, etc etc...)
 
+#include <algorithm>
 #include <glm/glm.hpp>
 
 namespace cg {
@@ -89,7 +90,7 @@ namespace cg {
       // smoothstep?? not even doing it
       float falloff_val = (glm::clamp((dist - falloff_start) / (1.0f - falloff_start), 0.0f, 1.0f));
       falloff_val = glm::smoothstep(0.0f, 1.0f, falloff_val);
-      return 1.0f - falloff_val;
+      return std::max(1.0f - falloff_val, 0.0f);
     }
    private:
   };

@@ -3,8 +3,6 @@
 
 #include "corrugate/sampler/SampleWriterGeneric.hpp"
 
-#include <chunker/util/Fraction.hpp>
-
 // smoothing box should handle itself - we just pass in the params
 // (alt: thinking we just compose this lol)
 // (or: expose both funcs and just call the one)

@@ -3,6 +3,7 @@
 
 #include "corrugate/sampler/MultiBoxSampler.hpp"
 #include "corrugate/box/BaseSmoothingSamplerBox.hpp"
+#include "gog43/Logger.hpp"
 
 #include <algorithm>
 
@@ -18,7 +19,29 @@ namespace cg {
     // the rest are the same
    public:
     template <typename IterableType>
-    SmoothingMultiBoxSampler(const IterableType& contents) : samplers(contents.begin(), contents.end()), wrap(samplers) {}
+    SmoothingMultiBoxSampler(const IterableType& contents) : samplers(contents.begin(), contents.end()), wrap(samplers) {
+      // lengthy test - want to see something
+      auto itr = contents.begin();
+      while (itr != contents.end()) {
+        auto itr_prev = itr++;
+        if (std::find(itr, contents.end(), *itr_prev) != contents.end()) {
+          gog43::print("SAMPLER: bug - found duplicate in incoming samplers!!!");
+        }
+
+        for (auto itr_sub = itr; itr_sub != contents.end(); itr_sub++) {
+          if (
+            glm::length((*itr_prev)->GetOrigin() - (*itr_sub)->GetOrigin()) < 0.0001
+            && glm::length((*itr_prev)->GetSize() - (*itr_sub)->GetSize()) < 0.0001
+            && itr_sub != itr_prev && (*itr_sub).get() != (*itr_prev).get()
+          ) {
+            // logged - probably a whole bunch of duplicate boxes!
+            gog43::print("SAMPLER: potential duplicate box found!");
+          }
+        }
+      }
+
+
+    }
 
     // how does this end up working for samples??
     // - if we just wrap the underlying component, it would be easy
@@ -31,7 +54,7 @@ namespace cg {
 
     float SampleHeight(double x, double y, double underlying) const {
       float acc = 0.0f;
-      acc += wrap.SampleHeight(x, y);
+      // acc += wrap.SampleHeight(x, y);
 
       float smooth_acc = 0.0f;
 
@@ -52,7 +75,7 @@ namespace cg {
 
       for (size_t i = 0; i < samplers.size(); i++) {
         if (falloffs[i] > 0.00001f) {
-          acc += samplers[i]->GetSmoothDelta(x, y, underlying) * (falloffs[i] / falloff_sum);
+          acc += samplers[i]->GetSmoothDelta(x, y, underlying);
         }
       }
 

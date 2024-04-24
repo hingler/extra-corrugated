@@ -28,7 +28,10 @@ namespace cg {
   // base sampler - identifies box positions
   template <typename BoxType>
   class MultiSampler {
+   public:
     typedef std::shared_ptr<BoxType> box_type;
+    typedef const std::shared_ptr<BoxType> itr_type;
+
     typedef std::unordered_set<box_type> set_type;
     typedef std::unordered_map<glm::ivec2, set_type> cache_type;
    public:
@@ -82,7 +85,10 @@ namespace cg {
                    box_origin.x < end.x     && box_origin.y < end.y
                 && box_end.x    > origin.x  && box_end.y    > origin.y
               ) {
-                output.insert(std::const_pointer_cast<const BoxType>(box));
+                auto cast_result = std::const_pointer_cast<const BoxType>(box);
+                if (output.find(cast_result) == output.end()) {
+                  output.insert(cast_result);
+                }
               }
             }
           }
@@ -128,6 +134,7 @@ namespace cg {
       glm::dvec2 origin = res->GetOrigin();
       glm::dvec2 end = origin + res->GetSize();
 
+      // tba: floor/ceil calcs should be extracted
       glm::ivec2 chunk_floor = static_cast<glm::ivec2>(glm::floor((origin - DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
       glm::ivec2 chunk_ceil = static_cast<glm::ivec2>(glm::ceil((end + DVEC_EPSILON) / static_cast<double>(_SAMPLER_CHUNK_SIZE)));
 

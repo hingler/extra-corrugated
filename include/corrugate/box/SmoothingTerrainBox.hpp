@@ -7,7 +7,6 @@
 #include "corrugate/box/BaseSmoothingSamplerBox.hpp"
 
 #include "corrugate/sampler/DataSampler.hpp"
-#include "gog43/Logger.hpp"
 
 namespace cg {
   // extend baseterrain
@@ -39,6 +38,8 @@ namespace cg {
       std::make_shared<_impl::ConstSampler>(smoothing_factor)
     ) {};
 
+
+
     template <typename HeightType, typename SplatType, typename FillType, typename GrassFillType, typename SmoothType>
     SmoothingTerrainBox(
       const cg::FeatureBox& box,
@@ -66,7 +67,7 @@ namespace cg {
       const glm::dvec2& size,
       std::shared_ptr<HeightType> heightmap,
       std::shared_ptr<SplatType> splat,
-      std::shared_ptr<FillType> fill,
+      const std::shared_ptr<FillType>& fill,
       const std::shared_ptr<GrassFillType>& grass_fill,
       float falloff_radius,
       float falloff_dist,

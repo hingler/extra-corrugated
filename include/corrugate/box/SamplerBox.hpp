@@ -6,8 +6,6 @@
 
 #include <glm/glm.hpp>
 
-#include <chunker/util/Fraction.hpp>
-
 // behavior
 // - virtuals for sampling height, splat, fills
 // - virtuals for writing chunks of height, splat, fill (to output)

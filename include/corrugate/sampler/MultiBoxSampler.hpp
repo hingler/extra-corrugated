@@ -64,18 +64,13 @@ namespace cg {
     }
 
     float SampleTreeFill(double x, double y) const {
-      float acc = 0.0f;
-
-      float falloffs[samplers.size()];
-      float falloff_sum = 0.0f;
-      for (size_t i = 0; i < samplers.size(); i++) {
-        falloffs[i] = samplers[i]->GetFalloffWeight(x, y);
-        falloff_sum += falloffs[i];
-      }
+      float acc = 1.0f;
 
       // how do we want to do this? probably another weighted average (tba)
       for (size_t i = 0; i < samplers.size(); i++) {
-        acc += (samplers[i]->SampleTreeFill(x, y) * (falloffs[i] / falloff_sum));
+        if (samplers[i]->Contains(x, y)) {
+          acc = std::min(samplers[i]->SampleTreeFill(x, y), acc);
+        }
       }
 
       return acc;

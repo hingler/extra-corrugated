@@ -3,7 +3,6 @@
 
 #include "corrugate/box/SamplerBox.hpp"
 #include "corrugate/sampler/BaseTerrainSampler.hpp"
-#include "gog43/Logger.hpp"
 #include <functional>
 
 namespace cg {
@@ -156,21 +155,21 @@ namespace cg {
 
     // apply falloff to generic data type?
     template <typename FalloffDataType>
-    void ApplyFalloff(const glm::dvec2& origin_relative, const glm::ivec2& sample_dims, const chunker::util::Fraction& scale, FalloffDataType* output, size_t n_elements, const DataSampler<float>* falloffs) const {
+    void ApplyFalloff(const glm::dvec2& origin_relative, const glm::ivec2& sample_dims, const double scale, FalloffDataType* output, size_t n_elements, const DataSampler<float>* falloffs) const {
       // specify origin in local coords
       size_t cur = 0;
 
       glm::dvec2 local_coord;
 
       for (int y = 0; y < sample_dims.y; y++) {
-        local_coord.y = static_cast<double>(y) * scale.AsDouble() + origin_relative.y;
+        local_coord.y = static_cast<double>(y) * scale + origin_relative.y;
         for (int x = 0; x < sample_dims.x; x++) {
           if (++cur > n_elements) {
 
             return;
           }
 
-          local_coord.x = static_cast<double>(x) * scale.AsDouble() + origin_relative.x;
+          local_coord.x = static_cast<double>(x) * scale + origin_relative.x;
           // also apply falloff ptr
 
           float falloff_weight = GetFalloffWeight_local(local_coord);

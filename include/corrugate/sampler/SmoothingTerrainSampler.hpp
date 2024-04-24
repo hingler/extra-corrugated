@@ -58,7 +58,7 @@ namespace cg {
 
 
     glm::dvec2 GetHammersley(unsigned int x, unsigned int n, const glm::dvec2& origin, const glm::dvec2& size) const {
-      unsigned int y = BitReverse(x); // need this as a fraction
+      unsigned int y = BitReverse(x);
       double x_frac = x / static_cast<double>(n);
 
       // bit reversed - need it as a fraction
