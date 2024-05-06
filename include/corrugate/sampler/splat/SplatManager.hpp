@@ -6,6 +6,7 @@
 
 #include <glm/glm.hpp>
 
+#include "corrugate/sampler/splat/impl/SplatWriter.hpp"
 #include "corrugate/sampler/splat/impl/SplatWriterImpl.hpp"
 
 // tba: deprecate impl in terraingen in favor of this
@@ -60,7 +61,7 @@ namespace cg {
     // thinking: pass in number of samplers to pull, for consistency (don't write if not avail)
 
     bool HasSampler(size_t splat_index) const {
-      return splat_index >= 0 && splat_index < writers_.capacity() && writers_[splat_index] != nullptr;
+      return (splat_index >= 0) && (splat_index < writers_.size()) && (writers_[splat_index] != nullptr);
     }
 
     int GetLayerCount() const { return writers_.size(); }
@@ -96,8 +97,8 @@ namespace cg {
 
    private:
     void EnsureCapacity(size_t splat_index) {
-      if (writers_.size() < (splat_index + 1)) {
-        writers_.resize(splat_index + 1);
+      while (writers_.size() < (splat_index + 1)) {
+        writers_.push_back(std::move(nullptr));
       }
     }
     std::vector<std::unique_ptr<impl::SplatWriter>> writers_;

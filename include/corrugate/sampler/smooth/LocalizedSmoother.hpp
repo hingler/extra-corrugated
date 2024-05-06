@@ -13,8 +13,9 @@ namespace cg {
       typedef impl::SubSmoother<HeightType, SDFType> sub_type;
      public:
       LocalizedSmoother(
-        const std::shared_ptr<HeightType>& height
-      ) : height(height) {}
+        const std::shared_ptr<HeightType>& height,
+        const glm::dvec2& global_origin
+      ) : height(height), global_origin(global_origin) {}
 
       double GetDelta(
         double x,
@@ -27,10 +28,7 @@ namespace cg {
         for (const std::shared_ptr<sub_type>& smoother : subsmoothers) {
           double falloff = smoother->GetFalloffWeight(x, y);
           falloff_sum += falloff;
-          if (falloff > 0.8) {
-            net_delta += smoother->Smooth(x, y, underlying);
-            return net_delta;
-          }
+          net_delta += smoother->Smooth(x, y, underlying);
         }
 
         if (falloff_sum > 1.0) {
@@ -51,7 +49,7 @@ namespace cg {
         // (tba: want a separate smoother, just for the green, to flatten it out a bit further)
         subsmoothers.push_back(
           std::make_shared<sub_type>(
-            height, sdf, start, end, fade, max_slope
+            height, sdf, global_origin, start, end, fade, max_slope
           )
         );
       }
@@ -59,6 +57,8 @@ namespace cg {
      private:
       std::shared_ptr<HeightType> height;
       std::vector<std::shared_ptr<sub_type>> subsmoothers;
+
+      glm::dvec2 global_origin;
     };
   }
 }

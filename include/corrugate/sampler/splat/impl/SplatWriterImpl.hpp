@@ -6,6 +6,7 @@
 // - how do we handle empty samplers, in that case??
 // - defaultsampler (just do nothing) [would have to pass in, that's fine]
 
+#include <algorithm>
 #include <memory>
 
 #include "corrugate/sampler/splat/impl/SplatWriter.hpp"
@@ -123,26 +124,53 @@ namespace cg {
         glm::dvec2 sample_pos;
         // just realized: splat is probably
         glm::dvec2 half_scale = scale * 0.5;
+        double temp = 0.0;
         for (int y = 0; y < size.y; ++y) {
           for (int x = 0; x < size.x; ++x) {
             // inc by half scale - want to sample pixel center, not pixel corner
+            double net_alpha = 0.0;
             sample_pos.x = offset.x + scale.x * x + half_scale.x;
             sample_pos.y = offset.y + scale.y * y + half_scale.y;
-            *wptr++ = sampler_r.Sample(sample_pos.x, sample_pos.y);
-            *wptr++ = sampler_g.Sample(sample_pos.x, sample_pos.y);
-            *wptr++ = sampler_b.Sample(sample_pos.x, sample_pos.y);
-            *wptr++ = sampler_a.Sample(sample_pos.x, sample_pos.y);
+
+            // treat w alpha igs
+            temp = sampler_r.Sample(sample_pos.x, sample_pos.y);
+            net_alpha = std::max(std::min(net_alpha + temp, 1.0), 0.0);
+            *wptr++ = temp;
+
+            temp = sampler_g.Sample(sample_pos.x, sample_pos.y) * (1.0 - net_alpha);
+            net_alpha = std::max(std::min(net_alpha + temp, 1.0), 0.0);
+            *wptr++ = temp;
+
+            temp = sampler_b.Sample(sample_pos.x, sample_pos.y) * (1.0 - net_alpha);
+            net_alpha = std::max(std::min(net_alpha + temp, 1.0), 0.0);
+            *wptr++ = temp;
+
+            *wptr++ = sampler_a.Sample(sample_pos.x, sample_pos.y) * (1.0 - net_alpha);
           }
         }
       }
 
       glm::vec4 Sample(double x, double y) override {
-        return glm::vec4(
-          sampler_r.Sample(x, y),
-          sampler_g.Sample(x, y),
-          sampler_b.Sample(x, y),
-          sampler_a.Sample(x, y)
-        );
+        glm::vec4 res(0.0);
+        double temp;
+        double net_alpha = 0.0;
+
+        temp = sampler_r.Sample(x, y);
+        net_alpha = std::min(temp + net_alpha, 1.0);
+        res.r = temp;
+
+        temp = sampler_g.Sample(x, y) * (1.0 - net_alpha);
+        net_alpha = std::min(temp + net_alpha, 1.0);
+        res.g = temp;
+
+        temp = sampler_b.Sample(x, y) * (1.0 - net_alpha);
+        net_alpha = std::min(temp + net_alpha, 1.0);
+        res.b = temp;
+
+        temp = sampler_a.Sample(x, y) * (1.0 - net_alpha);
+        res.a = temp;
+
+        return res;
       }
       private:
       sR sampler_r;

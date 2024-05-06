@@ -24,15 +24,17 @@ namespace cg {
         SubSmoother(
           const std::shared_ptr<HeightType>& underlying,
           const std::shared_ptr<SDFType>& sdf,
+          const glm::dvec2& global_origin,
           const glm::dvec2& start,
           const glm::dvec2& end,
           double fade_dist,
           double target_slope_cents
         ) : height_map(underlying),
             weight_map(sdf),
-            fade(std::abs(fade_dist / 2.0)),
-            start(start - fade_dist),
-            end(end + fade_dist),
+            fade(std::abs(fade_dist)),
+            global_origin(global_origin),
+            start(start - fade),
+            end(end + fade),
             cache_flag(false),
             target_slope_cents(target_slope_cents)
         {
@@ -47,8 +49,7 @@ namespace cg {
             return 0.0;
           }
 
-          // double falloff = 1.0 - glm::smoothstep(0.0, fade * 2.0, dist);
-          double falloff = 1.0;
+          double falloff = 1.0 - glm::smoothstep(0.0, fade, dist);
           // should be OK here!
           // - add non-null rough samplers to this
           // - pass as sharedptr to sdf box
@@ -77,7 +78,7 @@ namespace cg {
           // scale down delta by deviation
           // oh - delta * (1.0 - fac)??
 
-          double res = delta * (1.0 - (0.0)) * falloff;
+          double res = delta * (1.0 - local_smooth_factor) * falloff;
 
           return res;
         }
@@ -91,7 +92,8 @@ namespace cg {
             // build cache
 
             double height_sum = 0.0;
-            glm::dvec2 origin = start;
+            // need to offset further - sample in global space!!! (size is the same tho)
+            glm::dvec2 origin = global_origin + start;
             glm::dvec2 size = (end - start);
 
             double max_slope = 0.00001;
@@ -123,6 +125,9 @@ namespace cg {
         const std::shared_ptr<HeightType> height_map;
         const std::shared_ptr<SDFType> weight_map;
         const double fade;
+
+        const glm::dvec2 global_origin;
+
         const glm::dvec2 start;
         const glm::dvec2 end;
 

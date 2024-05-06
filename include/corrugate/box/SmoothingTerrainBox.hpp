@@ -123,7 +123,7 @@ namespace cg {
           if (Contains_Local(local_coord)) {
             float falloff = GetFalloffWeight_local(local_coord);
             float falloff_sum = std::max(falloff_sums.Get(x, y), 0.00001f);
-            output[y * sample_dims.x + x] = smoother.Smooth(underlying_data.Get(x, y)) * falloff * (falloff / falloff_sum);
+            output[y * sample_dims.x + x] = smoother.Smooth(underlying_data.Get(x, y)) * falloff;
           } else {
             output[y * sample_dims.x + x] = 0.0f;
           }

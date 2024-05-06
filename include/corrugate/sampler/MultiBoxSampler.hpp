@@ -3,6 +3,7 @@
 
 #include "corrugate/box/SamplerBox.hpp"
 #include "glm/ext/vector_common.hpp"
+#include "gog43/Logger.hpp"
 
 #include <algorithm>
 #include <glm/glm.hpp>
@@ -19,7 +20,20 @@ namespace cg {
 
     // this kicks ass lol
     template <typename IterableType>
-    MultiBoxSampler(const IterableType& contents) : samplers(contents.begin(), contents.end()) {}
+    MultiBoxSampler(const IterableType& contents) : samplers(contents.begin(), contents.end()) {
+      // auto itr = samplers.begin();
+
+      // // strip null entries - not sure why this is appearing
+      // while (itr != samplers.end()) {
+      //   if ((*itr).get() == nullptr) {
+      //     // not sure why this would ever be happening
+      //     gog43::print("MultiBox: encountered null entry in MBS??");
+      //     itr = samplers.erase(itr);
+      //   } else {
+      //     itr++;
+      //   }
+      // }
+    }
 
     template <>
     MultiBoxSampler(const std::vector<std::shared_ptr<const BoxType>>& contents) : samplers(contents) {}
@@ -36,7 +50,9 @@ namespace cg {
     float SampleHeight(double x, double y) const {
       float acc = 0.0f;
       for (auto& sampler : samplers) {
-        acc += sampler->SampleHeight(x, y);
+        if (sampler->Contains(x, y)) {
+          acc += sampler->SampleHeight(x, y);
+        }
       }
 
       return acc;
@@ -55,7 +71,10 @@ namespace cg {
       // }
 
       for (size_t i = 0; i < samplers.size(); i++) {
-        acc += samplers[i]->SampleSplat(x, y, index);
+        // alt: samplesplat call is failing??
+        if (samplers[i]->Contains(x, y)) {
+          acc += samplers[i]->SampleSplat(x, y, index);
+        }
       }
 
       acc = glm::clamp(acc, glm::vec4(0.0), glm::vec4(1.0));
@@ -276,7 +295,7 @@ namespace cg {
     }
 
    private:
-    const vector_type samplers;
+    vector_type samplers;
   };
 }
 

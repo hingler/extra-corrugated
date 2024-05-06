@@ -35,6 +35,7 @@ namespace cg {
     typedef std::unordered_set<box_type> set_type;
     typedef std::unordered_map<glm::ivec2, set_type> cache_type;
    public:
+    typedef std::shared_ptr<const BoxType> return_type;
     typedef std::unordered_set<std::shared_ptr<const BoxType>> output_type;
     // (making these public for impl)
     // best way to handle these chunking operations? prob just vector
@@ -98,7 +99,11 @@ namespace cg {
 
     // fetches all boxes in the range of some pre-specified box
     void FetchRange(const std::shared_ptr<BoxType>& box, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
-      FetchRange(box->GetOrigin(), box->GetSize(), output);
+      FetchRange(*box, output);
+    }
+
+    void FetchRange(const cg::FeatureBox& bounds, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
+      FetchRange(bounds.GetOrigin(), bounds.GetSize(), output);
     }
 
     size_t size() const {

@@ -64,6 +64,14 @@ namespace cg {
       return GetFalloffWeight_local(local);
     }
 
+    bool operator==(const FeatureBox& other) const {
+      return origin == other.origin
+      && size == other.size
+      && falloff_radius == other.falloff_radius
+      && falloff_size == other.falloff_size
+      && border_radius == other.border_radius;
+    }
+
     const glm::dvec2 origin;
     const glm::dvec2 size;
 
