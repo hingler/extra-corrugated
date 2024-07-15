@@ -17,7 +17,8 @@ namespace cg {
     /// @brief Create sampler box
     /// @param falloff_radius - distance on which to handle falloff - 0 = sharp edge
     /// @param falloff_dist - distance from border on which to handle falloff
-    SamplerBox(const glm::vec2& origin, const glm::dvec2& size, float falloff_radius, float falloff_dist) : FeatureBox(origin, size, falloff_radius, falloff_dist) {}
+    SamplerBox(const glm::dvec2& origin, const glm::dvec2& size) : SamplerBox(origin, size, 1.0f, 0.0f) {}
+    SamplerBox(const glm::dvec2& origin, const glm::dvec2& size, float falloff_radius, float falloff_dist) : FeatureBox(origin, size, falloff_radius, falloff_dist) {}
 
     /// @brief   Samples height
     /// @param x - global x coordinate

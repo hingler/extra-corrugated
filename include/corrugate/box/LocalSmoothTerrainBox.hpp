@@ -22,19 +22,63 @@ namespace cg {
       const std::shared_ptr<FillType>& fill,
       const std::shared_ptr<GrassFillType>& grass_fill,
       const std::shared_ptr<smooth::LocalizedSmoother<BaseType, SmootherSDF>>& smoother
-    ) : BaseTerrainBox(
+    ) : LocalSmoothTerrainBox(
       box.GetOrigin(),
       box.GetSize(),
+      box.falloff_radius,
+      box.falloff_size,
       heightmap,
       splat,
       fill,
       grass_fill,
-      box.falloff_radius,
-      box.falloff_size
+      smoother
+    ) {}
+
+    template <
+      typename HeightType,
+      typename SplatType,
+      typename FillType,
+      typename GrassFillType
+    >
+    LocalSmoothTerrainBox(
+      const glm::dvec2& origin,
+      const glm::dvec2& size,
+      const std::shared_ptr<HeightType>& heightmap,
+      const std::shared_ptr<SplatType>& splat,
+      const std::shared_ptr<FillType>& fill,
+      const std::shared_ptr<GrassFillType>& grass_fill,
+      const std::shared_ptr<smooth::LocalizedSmoother<BaseType, SmootherSDF>>& smoother
+    ) : LocalSmoothTerrainBox(origin, size, 1.0, 0.0, heightmap, splat, fill, grass_fill, smoother) {}
+
+    template <
+      typename HeightType,
+      typename SplatType,
+      typename FillType,
+      typename GrassFillType
+    >
+    LocalSmoothTerrainBox(
+      const glm::dvec2& origin,
+      const glm::dvec2& size,
+      double falloff_radius,
+      double falloff_size,
+      const std::shared_ptr<HeightType>& heightmap,
+      const std::shared_ptr<SplatType>& splat,
+      const std::shared_ptr<FillType>& fill,
+      const std::shared_ptr<GrassFillType>& grass_fill,
+      const std::shared_ptr<smooth::LocalizedSmoother<BaseType, SmootherSDF>>& smoother
+    ) : BaseTerrainBox(
+      origin,
+      size,
+      heightmap,
+      splat,
+      fill,
+      grass_fill,
+      falloff_radius,
+      falloff_size
     ), BaseSmoothingSamplerBox(
-      box.GetOrigin(), box.GetSize(), box.falloff_radius, box.falloff_size
+      origin, size, falloff_radius, falloff_size
     ), SamplerBox(
-      box.GetOrigin(), box.GetSize(), box.falloff_radius, box.falloff_size
+      origin, size, falloff_radius, falloff_size
     ), smoother(smoother) {}
 
     float GetSmoothDelta(double x, double y, double underlying) const override {

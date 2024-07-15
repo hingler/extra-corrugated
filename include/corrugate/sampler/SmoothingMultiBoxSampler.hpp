@@ -24,6 +24,9 @@ namespace cg {
     template <typename IterableType>
     SmoothingMultiBoxSampler(const IterableType& contents) : samplers(contents.begin(), contents.end()), wrap(samplers) {}
 
+    const_iterator cbegin() const { return samplers.cbegin(); }
+    const_iterator cend() const { return samplers.cend(); }
+
     // how does this end up working for samples??
     // - if we just wrap the underlying component, it would be easy
     // - i guess in either case, we're doing the same amount of work:

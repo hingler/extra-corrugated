@@ -72,7 +72,6 @@ namespace cg {
     float SampleTreeFill(double x, double y) const {
       float acc = 1.0f;
 
-      // how do we want to do this? probably another weighted average (tba)
       for (size_t i = 0; i < samplers.size(); i++) {
         if (samplers[i]->Contains(x, y)) {
           acc = std::min(samplers[i]->SampleTreeFill(x, y), acc);

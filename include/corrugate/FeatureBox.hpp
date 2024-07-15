@@ -20,12 +20,14 @@ namespace cg {
   class FeatureBox {
    public:
     FeatureBox() : FeatureBox(glm::dvec2(0), glm::dvec2(0)) {}
-    FeatureBox(const glm::dvec2& origin, const glm::dvec2& size) : FeatureBox(origin, size, 1.0f, 1.0f) {}
+    FeatureBox(const glm::dvec2& origin, const glm::dvec2& size) : FeatureBox(origin, size, 1.0f, 0.0f) {}
     FeatureBox(const glm::dvec2& origin, const glm::dvec2& size, float falloff_radius, float falloff_dist) : FeatureBox(origin, size, falloff_radius, falloff_dist, 1.0) {}
     FeatureBox(const glm::dvec2& origin, const glm::dvec2& size, float falloff_radius, float falloff_size, float border_radius) : origin(origin), size(size), falloff_radius(falloff_radius), falloff_size(falloff_size), border_radius(border_radius) {}
     /// @brief Fetches the origin of this feature box
     /// @return origin
     glm::dvec2 GetOrigin() const { return origin; }
+
+    glm::dvec2 GetCenter() const { return origin + size / 2.0; }
 
     /**
      * @brief Fetches the size of this feature box

@@ -19,10 +19,10 @@ namespace cg {
       const std::shared_ptr<GrassFillType> grass_fill,
       const glm::dvec2& size = glm::dvec2(-1.0)
     ) :
-      height_(std::make_unique<SampleWriterGenericImpl<float, HeightType>>(heightmap, size)),
-      splat_(std::make_unique<IndexedSampleWriterGenericImpl<glm::vec4, SplatType>>(splat, size)),
-      tree_fill_(std::make_unique<SampleWriterGenericImpl<float, TreeFillType>>(tree_fill, size)),
-      grass_fill_(std::make_unique<SampleWriterGenericImpl<float, GrassFillType>>(grass_fill, size))
+      height_(std::make_shared<SampleWriterGenericImpl<float, HeightType>>(heightmap, size)),
+      splat_(std::make_shared<IndexedSampleWriterGenericImpl<glm::vec4, SplatType>>(splat, size)),
+      tree_fill_(std::make_shared<SampleWriterGenericImpl<float, TreeFillType>>(tree_fill, size)),
+      grass_fill_(std::make_shared<SampleWriterGenericImpl<float, GrassFillType>>(grass_fill, size))
     {}
 
     float SampleHeight(double x, double y) const {
@@ -87,10 +87,10 @@ namespace cg {
       return grass_fill_->WriteChunk(origin, sample_dims, scale, output, n_bytes);
     }
    private:
-    std::unique_ptr<SampleWriterGeneric<float>> height_;
-    std::unique_ptr<IndexedSampleWriterGeneric<glm::vec4>> splat_;
-    std::unique_ptr<SampleWriterGeneric<float>> tree_fill_;
-    std::unique_ptr<SampleWriterGeneric<float>> grass_fill_;
+    std::shared_ptr<SampleWriterGeneric<float>> height_;
+    std::shared_ptr<IndexedSampleWriterGeneric<glm::vec4>> splat_;
+    std::shared_ptr<SampleWriterGeneric<float>> tree_fill_;
+    std::shared_ptr<SampleWriterGeneric<float>> grass_fill_;
 
   };
 }

@@ -55,12 +55,12 @@ namespace cg {
 
     void FetchPoint(const glm::dvec2& point, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
       // narrow bounds here instead??
-      FetchRange(point - glm::dvec2(0.5), glm::dvec2(1), output);
+      FetchRange(point - glm::dvec2(0.5), glm::dvec2(1.0), output);
     }
 
     // fetch all boxes within a certain range
     void FetchRange(const glm::dvec2& origin, const glm::dvec2& size, std::unordered_set<std::shared_ptr<const BoxType>>& output) const {
-      glm::dvec2 end = origin + size;
+      glm::dvec2 end = origin + glm::abs(size);
 
       // add an epsilon i think?
       // idea1: "pre-prep" the cache by collecting all boxes in some broad range (wrap)
@@ -73,8 +73,8 @@ namespace cg {
       std::lock_guard<std::recursive_mutex> lock(sampler_lock);
 
       glm::dvec2 box_origin, box_end;
-      for (int x = chunk_floor.x; x < chunk_ceil.x; x++) {
-        for (int y = chunk_floor.y; y < chunk_ceil.y; y++) {
+      for (int x = chunk_floor.x; x <= chunk_ceil.x; x++) {
+        for (int y = chunk_floor.y; y <= chunk_ceil.y; y++) {
           glm::ivec2 chunk(x, y);
           typename cache_type::const_iterator itr = chunk_lookup_cache.find(chunk);
           if (itr != chunk_lookup_cache.end()) {
@@ -87,9 +87,7 @@ namespace cg {
                 && box_end.x    > origin.x  && box_end.y    > origin.y
               ) {
                 auto cast_result = std::const_pointer_cast<const BoxType>(box);
-                if (output.find(cast_result) == output.end()) {
-                  output.insert(cast_result);
-                }
+                output.insert(cast_result);
               }
             }
           }
