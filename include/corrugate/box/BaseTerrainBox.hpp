@@ -25,11 +25,11 @@ namespace cg {
         sampler(heightmap, splat, fill, grass, size) {}
 
 
-    float SampleHeight(double x, double y)                   const override {
+    float SampleHeight(double x, double y) const override {
       return SampleFloatGeneric(x, y, &BaseTerrainSampler::SampleHeight);
     };
 
-    glm::vec4 SampleSplat(double x, double y, size_t index)     const override {
+    glm::vec4 SampleSplat(double x, double y, size_t index) const override {
       auto origin = GetOrigin();
       glm::dvec2 local_coord(x - origin.x, y - origin.y);
 
@@ -41,12 +41,12 @@ namespace cg {
       return glm::vec4(0.0);
     };
 
-    float SampleTreeFill( double x, double y)                   const override {
-      return SampleFloatGeneric(x, y, &BaseTerrainSampler::SampleTreeFill);
+    float SampleTreeFill( double x, double y) const override {
+      return SampleFloatFillGeneric(x, y, &BaseTerrainSampler::SampleTreeFill);
     };
 
     float SampleGrassFill(double x, double y) const override {
-      return SampleFloatGeneric(x, y, &BaseTerrainSampler::SampleGrassFill);
+      return SampleFloatFillGeneric(x, y, &BaseTerrainSampler::SampleGrassFill);
     }
 
     size_t WriteHeight(
@@ -93,6 +93,7 @@ namespace cg {
       size_t n_bytes,
       const DataSampler<float>* falloffs
     ) const override {
+      // tree and grass: falloff round towards one
       return WriteFloatGeneric(
         origin, sample_dims, scale, output, n_bytes, &BaseTerrainSampler::WriteTreeFill
       );
@@ -134,6 +135,21 @@ namespace cg {
       }
 
       return 0.0f;
+    }
+
+    float SampleFloatFillGeneric(
+      double x, double y, sample_fnptr samplerPointer
+    ) const {
+      auto origin = GetOrigin();
+      glm::dvec2 local_coord(x - origin.x, y - origin.y);
+      if (Contains_Local(local_coord)) {
+        float falloff_weight = GetFalloffWeight_local(local_coord);
+        float sample = (sampler.*samplerPointer)(local_coord.x, local_coord.y);
+        // - use falloff as a mix param
+        return 1.0f * (1.0f - falloff_weight) + sample * falloff_weight;
+      }
+
+      return 1.0f;
     }
 
     size_t WriteFloatGeneric(

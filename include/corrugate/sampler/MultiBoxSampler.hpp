@@ -3,7 +3,6 @@
 
 #include "corrugate/box/SamplerBox.hpp"
 #include "glm/ext/vector_common.hpp"
-#include "gog43/Logger.hpp"
 
 #include <algorithm>
 #include <glm/glm.hpp>
@@ -21,18 +20,6 @@ namespace cg {
     // this kicks ass lol
     template <typename IterableType>
     MultiBoxSampler(const IterableType& contents) : samplers(contents.begin(), contents.end()) {
-      // auto itr = samplers.begin();
-
-      // // strip null entries - not sure why this is appearing
-      // while (itr != samplers.end()) {
-      //   if ((*itr).get() == nullptr) {
-      //     // not sure why this would ever be happening
-      //     gog43::print("MultiBox: encountered null entry in MBS??");
-      //     itr = samplers.erase(itr);
-      //   } else {
-      //     itr++;
-      //   }
-      // }
     }
 
     template <>

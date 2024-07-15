@@ -17,6 +17,10 @@ namespace cg {
     // - height function: need to add the smoothing values at the end
     // the rest are the same
    public:
+    typedef std::vector<std::shared_ptr<const SmoothingBoxType>> store_type;
+    typedef typename store_type::iterator iterator;
+    typedef typename store_type::const_iterator const_iterator;
+
     template <typename IterableType>
     SmoothingMultiBoxSampler(const IterableType& contents) : samplers(contents.begin(), contents.end()), wrap(samplers) {}
 
@@ -27,6 +31,22 @@ namespace cg {
     // stitch the two together at the end
     float GetFalloffWeight(double x, double y) const {
       return wrap.GetFalloffWeight(x, y);
+    }
+
+    store_type begin() {
+      return samplers.begin();
+    }
+
+    store_type end() {
+      return samplers.end;
+    }
+
+    store_type cbegin() {
+      return samplers.cbegin();
+    }
+
+    store_type cend() {
+      return samplers.cend();
     }
 
     float SampleHeight(double x, double y, double underlying) const {
@@ -58,6 +78,8 @@ namespace cg {
 
       return acc;
     }
+
+
 
     glm::vec4 SampleSplat(double x, double y, size_t index) const {
       return wrap.SampleSplat(x, y, index);
